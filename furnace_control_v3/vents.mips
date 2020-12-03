@@ -1,0 +1,24 @@
+# Furnace Control v3 (Vents)
+alias ventMem d0
+alias fillVent d1
+alias dumpVent d2
+
+alias x r0
+alias y r1
+
+define ROOMPRESSURE 20
+
+define DUMP -1
+define OFF 0
+define FILL 1
+
+s fillVent PressureExternal ROOMPRESSURE
+s dumpVent PressureExternal 0
+
+loop:
+l x ventMem Setting
+seq y x FILL
+s fillVent On y
+seq y x DUMP
+s dumpVent On y
+j loop

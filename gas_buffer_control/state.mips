@@ -1,0 +1,92 @@
+# Gas Buffer Control (State)
+define TANKPTARGET 8000
+define BUFFPTARGET 1000
+define TEMPERROR 3
+define BUFFDUMPMIN 20
+
+alias tempTargetMem d0
+alias tank d1 # Room temperature tank
+alias roomSensor d2 # Gas sensor in room
+alias buffSensor d3 # Pipe analyzer on buffer
+alias stateMem d4
+
+alias state r0
+alias tempTarget r1
+alias tankP r2
+alias buffP r3
+alias roomTemp r4
+alias buffTemp r5
+alias roomTempDiff r6
+alias roomTempFlag r7
+alias buffTempDiff r8
+alias buffTempFlag r9
+alias tempOk r10
+
+# State flags
+define IDLING 0
+define FILLING 1 # Filling buffer from external
+define WAITING 2 # Waiting for buffer conditioning
+define DUMPING 3 # Dumping buffer into tank
+
+s stateMem Setting IDLING
+s buffSensor On 1
+s buffSensor Lock 1
+
+main:
+l state stateMem Setting
+l tempTarget tempTargetMem Setting
+#add tempTarget tempTarget 273.15
+# Update measuring device state
+l roomTemp roomSensor Temperature
+l buffTemp buffSensor Temperature
+l buffP buffSensor Pressure
+l tankP tank Pressure
+jal checkTemp
+# Branch by state
+beq state IDLING idling
+beq state FILLING filling
+beq state WAITING waiting
+beq state DUMPING dumping
+
+idling:
+# If tank pressure is below target, start filling
+brge tankP TANKPTARGET 2
+s stateMem Setting FILLING
+j main
+
+filling:
+# If buffer pressure is at target, start waiting
+brlt buffP BUFFPTARGET 2
+s stateMem Setting WAITING
+j main
+
+waiting:
+# If not enough gas to back to filling
+brge buffP BUFFPTARGET 2
+s stateMem Setting FILLING
+# If temperatures are okay
+brne tempOk 1 2
+s stateMem Setting DUMPING
+j main
+
+dumping:
+# If tempertures not okay
+breqz tempOk 2
+s stateMem Setting WAITING
+# If buffer pressure is small, start idling
+brgt buffP BUFFDUMPMIN 2
+s stateMem Setting IDLING
+j main
+
+checkTemp:
+# Is room temperature close to target
+sub roomTempDiff roomTemp tempTarget
+abs roomTempDiff roomTempDiff
+slt roomTempFlag roomTempDiff TEMPERROR
+# Is buffer temperature close to target
+sub buffTempDiff buffTemp tempTarget
+abs buffTempDiff buffTempDiff
+slt buffTempFlag buffTempDiff TEMPERROR
+# Are both true
+and tempOk roomTempFlag buffTempFlag
+j ra

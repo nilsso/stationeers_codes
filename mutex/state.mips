@@ -1,0 +1,59 @@
+alias x r0
+alias y r1
+alias tMin r2
+alias tMax r3
+alias pMin r4
+alias pMax r5
+alias open r6
+
+define READY -1
+define TMIN 1
+define TMAX 2
+define PMIN 3
+define PMAX 4
+define OPEN 5
+
+s db Setting READY
+
+move x -1
+move y -1
+move tMin -1
+move tMax -1
+move pMin -1
+move pMax -1
+move open -1
+
+loop:
+jal receive
+s d0 Setting tMin
+s d1 Setting tMax
+s d2 Setting pMin
+s d3 Setting pMax
+s d4 Setting open
+j loop
+
+receive:
+l x db Setting
+beq x READY ra # nothing sent
+push ra
+jal waitForWrite
+pop ra
+brne x TMIN 2
+move tMin y
+brne x TMAX 2
+move tMax y
+brne x PMIN 2
+move pMin y
+brne x PMAX 2
+move pMax y
+brne x OPEN 2
+move open y
+j ra
+
+waitForWrite:
+s db Setting READY
+waitForWriteLoop:
+l y db Setting
+beq y READY waitForWriteLoop
+s db Setting READY
+j ra

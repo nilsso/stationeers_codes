@@ -1,0 +1,94 @@
+alias stateHousing d0
+alias targetTMinDial d1
+alias targetTMaxDial d2
+alias targetPMinDial d3
+alias targetPMaxDial d4
+alias openSwitch d5
+
+alias x r0
+alias tMin r1
+alias tMax r2
+alias pMin r3
+alias pMax r4
+alias open r5
+alias sendCode r6
+alias sendVal r7
+
+define READY -1
+define TMIN 1
+define TMAX 2
+define PMIN 3
+define PMAX 4
+define OPEN 5
+
+move tMin -1
+move tMax -1
+move pMin -1
+move pMax -1
+move open -1
+move sendCode -1
+move sendVal -1
+
+loop:
+# Temperature min
+l x targetTMinDial Setting
+bneal x tMin sendTMin
+# Temperature max
+l x targetTMaxDial Setting
+bneal x tMax sendTMax
+# Pressure min
+l x targetPMinDial Setting
+bneal x pMin sendPMin
+# Pressure max
+l x targetPMaxDial Setting
+bneal x pMax sendPMax
+# Open
+l x openSwitch Setting
+bneal x open sendOpen
+j loop
+
+sendTMin:
+move tMin x
+move sendCode TMIN
+move sendVal tMin
+j send
+
+sendTMax:
+move tMax x
+move sendCode TMAX
+move sendVal tMax
+j send
+
+sendPMin:
+move pMin x
+move sendCode PMIN
+move sendVal pMin
+j send
+
+sendPMax:
+move pMax x
+move sendCode PMAX
+move sendVal pMax
+j send
+
+sendOpen:
+move open x
+move sendCode OPEN
+move sendVal open
+j send
+
+send:
+push ra
+jal waitForReady
+pop ra
+s stateHousing Setting sendCode
+push ra
+jal waitForReady
+pop ra
+s stateHousing Setting sendVal
+j ra
+
+waitForReady:
+l x stateHousing Setting
+bne x READY waitForReady
+j ra

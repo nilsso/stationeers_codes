@@ -1,0 +1,98 @@
+# Furnace Control v3 (Input)
+define MIXHASH -1641500434
+define OFF 0
+define BASICDATA 010100100999
+define BASIC 1
+define BASICHASH -1301215609
+define ELECTRUMDATA 080240070999
+define ELECTRUM 2
+define ELECTRUMHASH 502280180
+define INVARDATA 600700120200
+define INVAR 3
+define INVARHASH -297990285
+define CONSTANTANDATA 010999100150
+define CONSTANTAN 4
+define CONSTANTANHASH 1058547521
+define SOLDERDATA 030350030200
+define SOLDER 5
+define SOLDERHASH -82508479
+define ASTRALOYDATA 500600120140
+define ASTRALOY 6
+define ASTRALOYHASH 412924554
+define HASTELLOYDATA 250300095100
+define HASTELLOY 7
+define HASTELLOYHASH 1579842814
+define INCONELDATA 425475115125
+define INCONEL 8
+define INCONELHASH -787796599
+define WASPALOYDATA 125275088100
+define WASPALOY 9
+define WASPALOYHASH 156348098
+define STELLITEDATA 400500170190
+define STELLITE 10
+define STELLITEHASH -1897868623
+
+alias stateIC d0
+alias furnace d1
+alias recipeDial d2
+alias reagentDisplay d3
+alias inputHashMem d4
+alias outputHashMem d5
+
+alias x r0
+alias y r1
+alias recipeID r2
+
+move recipeID -1
+
+loop:
+l x recipeDial Setting
+bneal x recipeID updateRecipeAndSendData
+ls x furnace 0 PrefabHash
+s inputHashMem Setting x
+l x furnace Reagents
+s reagentDisplay Setting x
+l y furnace RecipeHash
+breqz x 3
+brnez y 2
+move y MIXHASH
+s outputHashMem Setting x
+j loop
+
+updateRecipeAndSendData:
+move recipeID x
+move x 0
+move y 0
+brne x BASIC 3
+move x BASICDATA
+move y BASICHASH
+brne x ELECTRUM 3
+move x ELECTRUMDATA
+move y ELECTRUMHASH
+brne x INVAR 3
+move x INVARDATA
+move y INVARHASH
+brne x CONSTANTAN 3
+move x CONSTANTANDATA
+move y CONSTANTANHASH
+brne x SOLDER 3
+move x SOLDERDATA
+move y SOLDERHASH
+brne x ASTRALOY 3
+move x ASTRALOYDATA
+move y ASTRALOYHASH
+brne x HASTELLOY 3
+move x HASTELLOYDATA
+move y HASTELLOYHASH
+brne x INCONEL 3
+move x INCONELDATA
+move y INCONELHASH
+brne x WASPALOY 3
+move x WASPALOYDATA
+move y WASPALOYHASH
+brne x STELLITE 3
+move x STELLITEDATA
+move y STELLITEHASH
+s db Setting y
+#s stateIC Setting x
+j ra

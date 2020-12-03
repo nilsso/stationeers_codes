@@ -1,0 +1,42 @@
+# Gas Mixer
+define EPSILON 0.01
+
+alias analyzerA d0
+alias analyzerB d1
+alias mixer d2
+alias led d3
+
+alias tempA r0
+alias tempB r1
+
+# Initialize mixer locked and off
+s analyzerA On 1
+s analyzerA Lock 1
+s analyzerB On 1
+s analyzerB Lock 1
+s mixer On 0
+s mixer Lock 1
+s led On 1
+s led Lock 1
+
+define RED 4
+define GREEN 2
+
+main:
+l tempA analyzerA Temperature
+l tempB analyzerB Temperature
+# If temp difference too large, lock and turn off
+bap tempA tempB EPSILON unlock
+# Else unlock
+j unlock
+
+lock:
+s mixer On 0
+s mixer Lock 1
+s led Color RED
+j main
+
+unlock:
+s mixer Lock 0
+s led Color GREEN
+j main

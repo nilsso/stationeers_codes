@@ -1,0 +1,18 @@
+# Furnace Control v3 (State - Dump)
+alias furnace d0
+#alias openSwitch d1
+alias roomSensor d2
+alias coolingValve d3
+alias fillVent d4
+alias dumpVent d5
+alias stateLED d1
+
+s fillVent Mode 0
+s fillVent On 0
+s fillVent Lock 1
+s fillVent PressureExternal 20
+
+s dumpVent Mode 1
+s dumpVent On 1
+s dumpVent Lock 1
+s fillVent PressureExternal 20

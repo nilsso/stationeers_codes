@@ -1,0 +1,39 @@
+# Waste Heat Control
+define TANKPRESSURELIMIT 10000
+define ERROR 3
+
+alias targetTempMem d0
+alias roomSensor d1
+alias tank d2
+alias heatValve d3
+alias dumpPump d4
+alias overrideSwitch d5
+
+alias targetTemp r0
+alias roomTemp r1
+alias tempDiff r2
+alias tankPressure r3
+alias conditioning r4
+alias dumping r5
+alias override r6
+
+s heatValve On 0
+s heatValve Lock 1
+s dumpPump On 0
+s dumpPump Lock 1
+
+main:
+l targetTemp targetTempMem Setting
+l roomTemp roomSensor Temperature
+l tankPressure tank Pressure
+# Check conditioning
+sub tempDiff roomTemp targetTemp
+abs tempDiff tempDiff
+slt conditioning tempDiff ERROR
+s heatValve On conditioning
+# Check dumping
+sge dumping tankPressure TANKPRESSURELIMIT
+l override overrideSwitch Setting
+or dumping dumping override
+s dumpPump On dumping
+j main

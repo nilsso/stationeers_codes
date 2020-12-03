@@ -1,0 +1,34 @@
+alias gasRatioReader d0
+alias gasLogicMirror d1
+alias displayL d2
+alias displayR d3
+alias warnLight d4
+
+alias gasPressure r0
+alias gasTemp r1
+alias gasRatio r2
+
+# Initialize
+s displayL On 1
+s displayR On 1
+brdns gasRatioReader 2 # Skip if no ratio
+s warnLight Lock 1
+
+start:
+# Display pressure and temperature
+l gasPressure gasLogicMirror Pressure
+s displayL Setting gasPressure
+l gasTemp gasLogicMirror Temperature
+sub gasTemp gasTemp 273.15
+s displayR Setting gasTemp
+brdns gasRatioReader 2 # Skip if no ratio
+jal checkGasRatio
+j start
+
+checkGasRatio:
+l gasRatio gasRatioReader Setting
+brge gasRatio 1 3
+s warnLight On 1
+jr 2
+s warnLight On 0
+j ra

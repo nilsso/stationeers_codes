@@ -1,0 +1,66 @@
+# Gas Buffer Control (Devices)
+alias stateMem d0
+alias inPump d1 # External to buffer
+alias outPump d2 # Buffer to tank
+alias led d3
+
+# State
+alias state r0
+
+# State enum
+define IDLING 0
+define FILLING 1 # Filling buffer from external
+define WAITING 2 # Waiting for buffer conditioning
+define DUMPING 3 # Dumping buffer into tank
+
+define BLUE 0
+define YELLOW 5
+define GREEN 2
+
+# Initialize
+s inPump On 0
+s inPump Lock 1
+s outPump On 0
+s outPump Lock 1
+s led On 0
+s led Lock 1
+
+main:
+l state stateMem Setting
+# Branch by state
+beq state IDLING idling
+beq state FILLING filling
+beq state WAITING waiting
+beq state DUMPING dumping
+j main
+
+idling:
+# If tank pressure is below target, start filling
+s led On 0
+s inPump On 0
+s outPump On 0
+j main
+
+filling:
+# If buffer pressure is at target, start waiting
+s led Color BLUE
+s led On 1
+s inPump On 1
+s outPump On 0
+j main
+
+waiting:
+# Is room temperature within range
+s led Color YELLOW
+s led On 1
+s inPump On 0
+s outPump On 0
+j main
+
+dumping:
+# If buffer pressure is small, start idling
+s led Color GREEN
+s led On 1
+s inPump On 0
+s outPump On 1
+j main

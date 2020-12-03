@@ -1,0 +1,26 @@
+alias sensor d0
+alias angle r0
+alias hMem d1
+alias vMem d2
+
+start:
+jal horizontal
+jal vertical
+j start
+
+horizontal:
+s sensor Mode 1
+yield
+l angle sensor SolarAngle
+sub angle 0 angle
+s hMem Setting angle
+j ra
+
+vertical:
+s sensor Mode 2
+yield
+l angle sensor SolarAngle
+sub angle 75 angle
+div angle angle 1.5
+s vMem Setting angle
+j ra

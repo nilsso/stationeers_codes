@@ -1,0 +1,112 @@
+# Furnace Control v3 (State)
+alias furnace d0 # devices
+alias roomSensor d1
+alias coolingValve d2
+alias stateLED d3
+alias openSwitch d4
+
+alias pMin r0 # registers
+alias pMax r1
+alias tMin r2
+alias tMax r3
+alias tFurn r4
+alias pFurn r5
+alias tRoom r6
+alias state r7
+alias x r8
+alias y r9
+
+define EQUALIZEERROR 3 # magic numbers
+define PLIMIT 10000
+define FILLSETTING 10
+define DUMPSETTING 20
+define INRANGE 0 # state enumeration
+define EQUALIZING 1
+define FUELING 2
+define COOLING 3
+define DUMPING 4
+
+s db Setting -1 # initialize
+s furnace On 1
+s furnace Open 0
+s coolingValve On 0
+s stateLED On 1
+
+loop: # main loop
+yield
+l x db Setting # check for new pMin/pMax/tMin/tMax
+breq x -1 10 # which was written to db Setting
+s db Setting -1
+jal extractValueFromReceived
+move tMax y
+jal extractValueFromReceived
+move tMin y
+jal extractValueFromReceived
+move pMax y
+jal extractValueFromReceived
+move pMin y
+ls x furnace 0 Quantity
+breqz x 3 # wait for input to melt
+s stateLED Color 10 # pink
+jr -3
+l tFurn furnace Temperature # take readings
+l pFurn furnace Pressure
+l tRoom roomSensor Temperature
+jal updateState
+s furnace SettingInput 0
+s furnace SettingOutput 0
+s coolingValve On 0
+brne state FUELING 5 # adding fuel
+s furnace SettingInput FILLSETTING
+sleep 1
+s furnace SettingInput 0
+s furnace Activate 1
+brne state COOLING 2 # cooling the room
+s coolingValve On 1
+sleep 1
+brne state DUMPING 2 # dumping furnace gas
+s furnace SettingOutput DUMPSETTING
+s stateLED Color 6 # white (setting LED color)
+brne state EQUALIZING 2
+s stateLED Color 2 # green
+brne state FUELING 2
+s stateLED Color 3 # orange
+brne state COOLING 2
+s stateLED Color 0 # blue
+brne state DUMPING 2
+s stateLED Color 4 # red
+l x openSwitch Setting
+s furnace Open x
+j loop
+updateState:
+brlt pFurn pMin 6
+brgt pFurn pMax 5
+brlt tFurn tMin 4
+brgt tFurn tMax 3
+move state INRANGE # good to go
+j ra
+brgt pFurn PLIMIT 17 # dump if over hard limit
+sub x tRoom tFurn
+abs y x
+brle y EQUALIZEERROR 4 # equalize if out of range
+brgt x 500 7 # fuel if furnace is cooler
+move state EQUALIZING
+j ra
+sgt x tFurn tMin
+sgt y pFurn pMin
+and x x y
+brnez x 3 # fuel if temp or pres under mins
+move state FUELING
+j ra
+brlt tFurn tMax 3 # cool if temp over max
+move state COOLING
+j ra
+brlt pFurn pMax 2 # dump if pres over max
+move state DUMPING
+j ra
+extractValueFromReceived:
+mod y x 1000
+mul y y 10
+div x x 1000
+floor x x
+j ra

@@ -1,0 +1,56 @@
+alias aAtmo d0
+alias aLightY d1
+alias aLightR d2
+
+alias bAtmo d3
+alias bLightY d4
+alias bLightR d5
+
+alias quantity1 r0
+alias quantity2 r1
+alias emptyCount r2
+alias lightY r3
+alias lightR r4
+
+s aLightY Lock 1
+s aLightR Lock 1
+brdns bAtmo 3
+s bLightY Lock 1
+s bLightR Lock 1
+
+start:
+# Atmos filtration A
+ls quantity1 aAtmo 0 Quantity
+ls quantity2 aAtmo 1 Quantity
+jal getLightState
+s aLightY On lightY
+s aLightR On lightR
+# Atmos filtration B
+brdns bAtmo 6
+ls quantity1 bAtmo 0 Quantity
+ls quantity2 bAtmo 1 Quantity
+jal getLightState
+s bLightY On lightY
+s bLightR On lightR
+yield
+j start
+
+getLightState:
+move emptyCount 0
+# First filter
+brgtz quantity1 2
+add emptyCount emptyCount 1
+# Second filter
+brgtz quantity2 2
+add emptyCount emptyCount 1
+# Light state
+brne emptyCount 0 3
+move lightY 0
+move lightR 0
+brne emptyCount 1 3
+move lightY 1
+move lightR 0
+brne emptyCount 2 3
+move lightY 0
+move lightR 1
+j ra

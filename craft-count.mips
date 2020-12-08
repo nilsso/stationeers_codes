@@ -5,14 +5,21 @@ alias switch d2
 alias x r0
 alias y r1
 
-main:
+mainLoop:
+jal checkSwitch
 l x crafter On
-beqz x main
+beqz x mainLoop
 s crafter ClearMemory 1
 yield
+craftLoop:
+jal checkSwitch
 l x mem Setting
-counting:
 l y crafter ExportCount
-blt y x counting
+blt y x craftLoop
 s crafter On 0
-j main
+j mainLoop
+
+checkSwitch:
+l x switch Setting
+beqz x mainLoop
+j ra

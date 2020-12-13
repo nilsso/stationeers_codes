@@ -1,0 +1,14 @@
+alias silo d0
+alias stackerIn d1
+alias stackerOut d2
+alias splitterA d3
+alias splitterB d4
+alias splitterC d5
+
+s stackerIn Setting 500
+s stackerIn On 1
+s stackerOut Setting 100
+s stackerOut On 0
+
+main:
+j main

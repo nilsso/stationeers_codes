@@ -1,0 +1,106 @@
+alias fabAL d0 # fabrication devices
+alias fabEP d1
+alias fabPB d2
+alias fabTM d3
+define AL 0 # fabrication device index offsets
+define EP 1
+define PB 2
+define TM 3
+alias siloIC d4 # silo controler device
+
+alias deviceIndex r0
+alias material r1
+alias quantity r2
+
+# Initialize
+s splitterA Mode 2
+s splitterA On 1
+s splitterB Mode 2
+s splitterB On 1
+
+main:
+move deviceIndex AL
+jal checkMaterial
+#move currentDevice EP
+#jal checkMaterial
+#move currentDevice PB
+#jal checkMaterial
+#move currentDevice TM
+#jal checkMaterial
+j main
+
+checkMaterial:
+move material 0 # Astroloy
+lr quantity dr0 Contents Astroloy
+#blt quantity 100 requestMaterial
+move material 1 # Constantan
+lr quantity dr0 Contents Constantan
+#blt quantity 100 requestMaterial
+move material 2 # Copper
+lr quantity dr0 Contents Copper
+#blt quantity 100 requestMaterial
+move material 3  # Electrum
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Electrum
+move material 4  # Gold
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Gold
+move material 5  # Hastelloy
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Hastelloy
+move material 6  # Inconel
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Inconel
+move material 7  # Invar
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Invar
+move material 8  # Iron
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Iron
+move material 9  # Lead
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Lead
+move material 10 # Nickel
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Nickel
+move material 11 # Silicon
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Silicon
+move material 12 # Silver
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Silver
+move material 13 # Solder
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Solder
+move material 14 # Steel
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Steel
+move material 15 # Stellite
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Stellite
+move material 16 # Waspaloy
+lr quantity dr0 Contents
+#blt quantity 100 requestMaterial Waspaloy
+j ra
+
+requestMaterial:
+s db Setting material
+j main
+
+# define ASTROLOY 0
+# define CONSTANTAN 1
+# define COPPER 2
+# define ELECTRUM 3
+# define GOLD 4
+# define HASTELLOY 5
+# define INCONEL 6
+# define INVAR 7
+# define IRON 8
+# define LEAD 9
+# define NICKEL 10
+# define SILICON 11
+# define SILVER 12
+# define SOLDER 13
+# define STEEL 14
+# define STELLITE 15
+# define WASPALOY 16

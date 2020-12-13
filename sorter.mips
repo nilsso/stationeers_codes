@@ -1,0 +1,30 @@
+alias sorter d0
+
+alias x r0
+alias y r1
+
+s sorter Mode 2
+
+main:
+yield
+ls x sorter 0 OccupantHash
+#beq x  -676435305 sendMaterial # Mining Belt
+beq x  1724793494 sendMaterial # Ore (Coal)
+beq x  -707307845 sendMaterial # Ore (Copper)
+beq x  1758427767 sendMaterial # Ore (Iron)
+beq x -1348105509 sendMaterial # Ore (Gold)
+beq x  -916518678 sendMaterial # Ore (Silver)
+beq x  -190236170 sendMaterial # Ore (Lead)
+beq x  1103972403 sendMaterial # Ore (Silicon)
+beq x  1830218956 sendMaterial # Ore (Nickel)
+beq x  -983091249 sendMaterial # Ore (Cobalt)
+beq x -1516581844 sendMaterial # Ore (Uranium)
+beq x  1217489948 sendMaterial # Ice (Water)
+beq x -1805394113 sendMaterial # Ice (Oxite)
+beq x  1253102035 sendMaterial # Ice (Volatiles)
+s sorter Output 1
+j main
+
+sendMaterial:
+s sorter Output 0
+j main

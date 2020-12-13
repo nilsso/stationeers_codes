@@ -1,0 +1,29 @@
+# Clock code (repurposed from solar code)
+alias sensor d0
+# alias timeMem # 12 hour
+# alias colorMem # for AM/PM
+
+alias hAngle r0
+alias vAngle r1
+alias hAngleDawn r2
+alias vAngleMax r3
+
+loop:
+jal updateAngles
+sub hAngle hAngle hAngleDawn # rotate
+div vAngle vAngle vAngleMax
+mul vAngle vAngle 12
+j loop
+
+updateAngles:
+s sensor Mode 1
+yield
+l hAngle sensor SolarAngle
+s sensor Mode 2
+yield
+l vAngle sensor SolarAngle
+brnaz vAngle 1 2 # update
+move hAngleDawn hAngle # horizontal angle at dawn
+max vAngleMax vAngle vAngleMax # vertical angle maximum
+j ra
+

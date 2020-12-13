@@ -1,0 +1,25 @@
+alias crafter d0
+alias mem d1
+alias switch d2
+
+alias x r0
+alias y r1
+
+mainLoop:
+jal checkSwitch
+l x crafter On
+beqz x mainLoop
+s crafter ClearMemory 1
+yield
+craftLoop:
+jal checkSwitch
+l x mem Setting
+l y crafter ExportCount
+blt y x craftLoop
+s crafter On 0
+j mainLoop
+
+checkSwitch:
+l x switch Setting
+beqz x mainLoop
+j ra

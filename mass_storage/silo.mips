@@ -1,9 +1,16 @@
 alias silo d0
 alias stackerIn d1
 alias stackerOut d2
-alias splitterA d3
-alias splitterB d4
-alias splitterC d5
+alias memOffset d3
+alias memStocked d4
+alias memRequested d5
+
+alias quantitySilo r0
+alias quantityStacker r1
+alias quantityTotal r2
+alias offset r3
+alias mask r4
+alias stocked r5
 
 s stackerIn Setting 500
 s stackerIn On 1
@@ -11,4 +18,25 @@ s stackerOut Setting 100
 s stackerOut On 0
 
 main:
+yield
+# Do nothing if silo and stacker empty
+l quantitySilo silo Quantity
+l quantityStacker stackerOut Quantity 
+add quantityTotal quantitySilo quantityStacker
+beqz quantityTotal main
+# Dispense to stacker
+bge quantityStacker 100 updateStock
+s silo Open 1
+yield
+s silo Open 0
+yield
+l quantityStacker stackerOut Quantity
+brez quantityStacker -2 # wait for stacker to recieve
+updateStock:
+sgtz mask quantityStacker
+mul mask mask offset
+l stocked memStocked Setting
+and stocked stocked mask
+s memStocked Setting mask
+# Dispense per request
 j main

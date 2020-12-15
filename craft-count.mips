@@ -1,25 +1,39 @@
-alias crafter d0
-alias mem d1
-alias switch d2
+# Craft Count v0
+alias aCrafter d0
+alias aMem d1
+alias aSwitch d2
 
-alias x r0
-alias y r1
+alias bCrafter d3
+alias bMem d4
+alias bSwitch d5
 
-mainLoop:
-jal checkSwitch
+alias crafterOffset r0
+alias offset r1
+alias x r2
+alias y r3
+
+main:
+move crafterOffset 0
+jal checkCrafter
+move crafterOffset 3
+jal checkCrafter
+j main
+
+checkCrafter:
+add offset crafterOffset 2
+l x dr1 Setting
+
 l x crafter On
 beqz x mainLoop
-s crafter ClearMemory 1
-yield
 craftLoop:
 jal checkSwitch
 l x mem Setting
 l y crafter ExportCount
+s db Setting y
 blt y x craftLoop
+s crafter ClearMemory 1
 s crafter On 0
+yield
+s crafter On 1
 j mainLoop
-
-checkSwitch:
-l x switch Setting
-beqz x mainLoop
 j ra

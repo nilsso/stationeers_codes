@@ -1,0 +1,89 @@
+define OutputQuantity 100
+
+alias silo d0
+alias itemHashMem d1
+alias sorter d2
+alias outStacker d3
+alias requestMem d4 # logic mirror
+alias recievedTxMem d5
+
+alias itemHash r0
+alias bit r1
+alias unreceived r2
+alias x r3
+
+# Initialize
+l itemHash itemHashMem Setting
+jal getBit
+s sorter On 1
+s sorter Mode 2
+s outStacker On 1
+s outStacker Setting OutputQuantity
+s outStacker Mode 1
+
+main:
+sort:
+ls x sorter 0 OccupantHash
+beqz x restock # skip if not occupied
+seq x itemHash x
+s sorter Output x
+restock:
+l x outStacker Quantity
+bgtz x checkRecieved # skip if stacker not empty
+s silo Open 1
+yield
+s silo Open 0
+checkRecieved:
+beqz unreceived dispense # skip if haven't dispensed
+l x recievedTxMem Setting
+bne x itemHash dispense # skip if not our item hash
+s recievedTxMem Setting 0
+move unreceived 0
+dispense:
+bnez unreceived main # skip if waiting for receiver
+l x requestMem Setting
+div x x bit
+trunc x x
+mod x x 2 # x = 1 if item requested
+beqz x main # skip if our item not requested
+s outStacker Activate 1
+move unreceived 1
+j main
+
+getBit:
+move bit 1
+beq itemHash -404336834 ra # copper
+move bit 2
+beq itemHash 226410516 ra # gold
+move bit 4
+beq itemHash -1301215609 ra # iron
+move bit 8
+beq itemHash 2134647745 ra # lead
+move bit 16
+beq itemHash -1406385572 ra # nickel
+move bit 32
+beq itemHash -290196476 ra # silicon
+move bit 64
+beq itemHash -929742000 ra # silver
+move bit 128
+beq itemHash 1058547521 ra # constantan
+move bit 256
+beq itemHash 502280180 ra # electrum
+move bit 512
+beq itemHash -297990285 ra #invar
+move bit 1024
+beq itemHash -82508479 ra # solder
+move bit 2048
+beq itemHash -654790771 ra # steel
+move bit 4096
+beq itemHash 412924554 ra # astroloy
+move bit 8192
+beq itemHash 1579842814 ra # hastelloy
+move bit 16384
+beq itemHash -787796599 ra # inconel
+move bit 32768
+beq itemHash -1897868623 ra # stellite
+move bit 65536
+beq itemHash 156348098 ra # waspaloy
+# cause error somehow?
+

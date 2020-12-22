@@ -1,0 +1,93 @@
+alias sorter d0
+alias requestDownLMem d1
+alias requestDownRMem d2
+
+alias requestDownL r0
+alias requestDownR r1
+alias requestUp r2
+alias occupantHash r3
+alias sendRight r4
+
+alias bitA r3
+alias wordA r0
+alias bitB r4
+alias wordB r1
+alias bitOr r5
+alias wordOr r2
+alias i r6
+
+main:
+yield
+l requestDownL requestDownLMem Setting
+l requestDownR requestDownRMem Setting
+sortOccupant:
+ls occupantHash sorter 0 OccupantHash
+beqz occupantHash setRequestUp # skip if not occupied
+jal setSendRight
+s sorter Output sendRight
+setRequestUp:
+jal bitwiseOr
+s db Setting requestUp
+j main
+
+setSendRight:
+move i 1
+beq occupantHash -404336834 extractBit # copper
+move i 2
+beq occupantHash 226410516 extractBit # gold
+move i 4
+beq occupantHash -1301215609 extractBit # iron
+move i 8
+beq occupantHash 2134647745 extractBit # lead
+move i 16
+beq occupantHash -1406385572 extractBit # nickel
+move i 32
+beq occupantHash -290196476 extractBit # silicon
+move i 64
+beq occupantHash -929742000 extractBit # silver
+move i 128
+beq occupantHash 1058547521 extractBit # constantan
+move i 256
+beq occupantHash 502280180 extractBit # electrum
+move i 512
+beq occupantHash -297990285 extractBit #invar
+move i 1024
+beq occupantHash -82508479 extractBit # solder
+move i 2048
+beq occupantHash -654790771 extractBit # steel
+move i 4096
+beq occupantHash 412924554 extractBit # astroloy
+move i 8192
+beq occupantHash 1579842814 extractBit # hastelloy
+move i 16384
+beq occupantHash -787796599 extractBit # inconel
+move i 32768
+beq occupantHash -1897868623 extractBit # stellite
+move i 65536
+beq occupantHash 156348098 extractBit # waspaloy
+move sendRight 0
+j ra
+extractBit:
+div occupantHash occupantHash i
+trunc occupantHash occupantHash
+mod sendRight occupantHash 2
+j ra
+
+bitwiseOr:
+move wordOr 0
+move i 1
+bitwiseOrLoop:
+mod bitA wordA 2 # get LS bit from word A
+div wordA wordA 2 # right shift word A
+trunc wordA wordA
+mod bitB wordB 2 # get LS bit from word B
+div wordB wordB 2 # right shift word B
+trunc wordB wordB
+or bitOr bitA bitB # or the bits
+mul bitOr i bitOr # make bit a power of 2
+add wordOr bitOr wordOr # add to result
+mul i 2 i
+bgtz wordA bitwiseOrLoop # loop if either word not 0
+bgtz wordB bitwiseOrLoop
+j ra
+

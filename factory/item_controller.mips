@@ -1,0 +1,360 @@
+# Fabricator requestor
+alias fabricator d0
+alias requestMem d1
+
+alias request r0
+alias x r1
+
+main:
+move request 0
+ls x fabricator 0 QuantityAstraloy
+jal setBit
+# ...
+jump main
+
+setBit:
+sgtz x x
+add request request x
+mul request request 10
+j ra
+
+# ---
+# Item request counter
+# stores on db the number of item requested by any
+# of fabricators A B C and D
+#
+# A  B C  D
+#  \ / \ /
+#   Y   Z
+#    \ /
+#     X
+alias bitMem d0
+alias aFabIC d2
+alias bFabIC d3
+alias cFabIC d4
+alias dFabIC d5
+
+alias ptr r0
+alias shift r1
+alias requestCount r2
+alias x r3
+
+# Initialize
+l shift bitMem Setting
+log x 2
+mul shift shift x
+exp shift shift
+
+main:
+move ptr 1
+move requestCount 0
+jal checkFabRequest
+jal checkFabRequest
+jal checkFabRequest
+jal checkFabRequest
+s db Setting requestCount
+j main
+
+checkFabRequest:
+add ptr ptr 1
+bdns dr0 ra
+l x dr0 Setting
+div x x shift
+trunc x x
+add requestCount requestCount x
+mod x x 2
+j ra
+
+# ---
+# Item request dispatcher
+# Sets the total number of item to send, and
+# sets the number of item to send right for the
+# splitters X Y and Z
+#
+# A  B C  D
+#  \ / \ /
+#   Y   Z
+#    \ /
+#     X
+alias totalCounterIC d0 # counts requests from all fabs
+alias rightCounterIC d1 # counts requests from B and D
+alias dispatchMem d3
+alias xSendRightMem d4
+alias ySendRightMem d5
+alias zSendRightMem d6
+
+alias oldTotal r0
+alias x r1
+
+move oldTotal 0
+
+main:
+l x totalCounterIC Setting
+bleal x oldTotal incrementDispatch
+j main
+
+incrementDispatch:
+l x dispatchMem Setting
+sub x x oldTotal
+s dispatchMem Setting x
+move oldTotal x
+j ra
+
+# ---
+# Item sorter control
+# Stores on db the total number to be sent
+# Stores internally the number to send left/right
+#
+# A  B C  D
+#  \ / \ /
+#   Y   Z
+#    \ /
+#     X
+alias itemHashMem d1
+alias sorter d1
+alias l1FabIC d2
+alias l2FabIC d3
+alias r1FabIC d4
+alias r2FabIC d5
+
+alias ptr r0
+alias itemHash r1
+alias send r2
+alias sendL r3
+alias sendR r4
+alias x r5
+
+# Initialize
+l itemHash itemHashMem Setting
+
+main:
+# Check fabricator requests
+move ptr 1 # starts at d(r0 = 2) = l1FabIC
+move x 0
+jal checkFabRequest # check l1
+jal checkFabRequest # check l2
+move sendL x
+move x 0
+jal checkFabRequest # check r1
+jal checkFabRequest # check r2
+move sendR x
+add x sendL sendR # total requests
+
+# if requested total increases
+# add amount to send
+
+# get number requested total
+alias oldRequested rx
+alias curRequested rx
+
+alias oldRequestedL rx
+alias curRequestedL rx
+
+alias oldRequestedR rx
+alias curRequestedR rx
+
+# if send right increases
+# add amount to sendR
+# if sentR increases
+# decrement sendR and sentR
+
+# send : amount for silo to dispatch
+# sendR : amount for sorter to send right
+
+# if requestL increases
+# increment send
+
+l curRequestedL
+sub x curRequestedL oldRequestedL
+brgtz x 2
+add send send x
+move oldRequestedL curRequestedL
+
+# if requestR increases
+# increment send and sendR
+
+l curRequestedR
+sub x curRequestedR oldRequestedR
+brgtz x 3
+add send send x
+add sendR sendR x
+move oldRequestedL curRequestedR
+
+# if send > 0
+# silo dispatches and decrement send
+
+# if sorter occupied
+# if sendR > 0
+# send right and decrement sentR
+# else send left
+
+# if sentR < sendR
+# send right and increment sentR
+
+# if sendR decreases
+# decrement sendR and sentR
+
+# get number requested for right
+alias oldRequestedRight rx
+alias curRequestedRight rx
+
+# ---
+alias itemHashMem
+alias aFab
+alias bFab
+alias cFab
+alias dFab
+
+alias ptr r0
+alias itemHash r1
+
+# Initialize
+l itemHash itemHashMem Setting
+
+# tier 0
+define IngotCopper -404336834
+define IngotGold 226410516
+define IngotIron -1301215609
+define IngotLead 2134647745
+define IngotNickel -1406385572
+define IngotSilicon -290196476
+define IngotSilver -929742000
+# tier 1
+define IngotConstantan 1058547521
+define IngotElectrum 502280180
+define IngotInvar -297990285
+define IngotSolder -82508479
+define IngotSteel -654790771
+# tier 2
+define IngotAstroloy 412924554
+define IngotHastelloy 1579842814
+define IngotInconel -787796599
+define IngotStellite -1897868623
+define IngotWaspaloy 156348098
+
+# --------------------------------------------------------------------------------------------------
+# Fabricator request calculator
+define QuantityThreshold 100
+
+alias aFab d0 # tool manufactory
+alias bFab d1 # hydraulic pipe bender
+alias cFab d2 # electronics printer
+alias dFab d3 # autolathe
+alias itemHashMem d4 # hash for eg Copper, Iron, etc.
+
+alias ptr r0 # device pointer
+alias getQuantity r1 # line for reading quantity
+alias requests r2 # eg 5=0101: HPB and AL requesting
+alias logOf2 r3
+alias x r4
+alias y r5
+
+# Initialize
+log logOf2 2
+l x itemHashMem Setting
+move itemLine 127
+brne x  -404336834 2 # ingot copper    
+move itemLine Copper
+brne x   226410516 2 # ingot gold      
+move itemLine Gold
+brne x -1301215609 2 # ingot iron      
+move itemLine Lead
+brne x  2134647745 2 # ingot lead      
+move itemLine Lead
+brne x -1406385572 2 # ingot nickel    
+move itemLine Nickel
+brne x  -290196476 2 # ingot silicon   
+move itemLine Silicon
+brne x  -929742000 2 # ingot silver    
+move itemLine Silver
+brne x  1058547521 2 # ingot constantan
+move itemLine Constantan
+brne x   502280180 2 # ingot electrum  
+move itemLine Electrum
+brne x  -297990285 2 # ingot invar     
+move itemLine Invar
+brne x   -82508479 2 # ingot solder    
+move itemLine Solder
+brne x  -654790771 2 # ingot steel     
+move itemLine Steel
+brne x   412924554 2 # ingot astroloy  
+move itemLine Astroloy
+brne x  1579842814 2 # ingot hastelloy 
+move itemLine Hastelloy
+brne x  -787796599 2 # ingot inconel   
+move itemLine Inconel
+brne x -1897868623 2 # ingot stellite  
+move itemLine Stellite
+brne x   156348098 2 # ingot waspaloy  
+move itemLine Waspaloy
+
+main:
+move requests 0
+move ptr 0
+jal getQuantity # x = quantity
+slt x x QuantityThreshold # x = (x < 100)
+jal getMask # y = 2^ptr
+mul x y x # x = x * 2^y
+add requests x requests
+add ptr ptr 1
+brlt ptr 4 -5 # loop for the four fabricators
+s db Setting requests # make visible to other ICs
+j main
+
+getMask: # y = 2^ptr = e^(ptr * log_e(2))
+mul y ptr log2
+exp y y
+j ra
+
+Copper:
+ls x dr0 0 QuantityCopper
+j ra
+Gold:
+ls x dr0 0 QuantityGold
+j ra
+Iron:
+ls x dr0 0 QuantityIron
+j ra
+Lead:
+ls x dr0 0 QuantityLead
+j ra
+Nickel:
+ls x dr0 0 QuantityNickel
+j ra
+Silicon:
+ls x dr0 0 QuantitySilicon
+j ra
+Silver:
+ls x dr0 0 QuantitySilver
+j ra
+Constantan:
+ls x dr0 0 QuantityConstantan
+j ra
+Electrum:
+ls x dr0 0 QuantityElectrum
+j ra
+Invar:
+ls x dr0 0 QuantityInvar
+j ra
+Solder:
+ls x dr0 0 QuantitySolder
+j ra
+Steel:
+ls x dr0 0 QuantitySteel
+j ra
+Astroloy:
+ls x dr0 0 QuantityAstroloy
+j ra
+Hastelloy:
+ls x dr0 0 QuantityHastelloy
+j ra
+Inconel:
+ls x dr0 0 QuantityInconel
+j ra
+Stellite:
+ls x dr0 0 QuantityStellite
+j ra
+Waspaloy:
+ls x dr0 0 QuantityWaspaloy
+j ra
+

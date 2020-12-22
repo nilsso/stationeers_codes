@@ -1,0 +1,97 @@
+define RequestThreshold 100
+
+alias fabricator d0
+alias quantityControlSwitch d1
+alias quantityControlDial d2
+alias stacker d3
+alias requestMem d4
+alias receivedRxMem d5
+
+alias lastInput r0
+alias quantityControlOn r1
+alias quantity r2
+alias request r3
+alias x r4
+alias y r5
+
+main:
+yield
+checkInput:
+ls x fabricator 0 OccupantHash
+beq x lastInput writeRx # skip if no change
+breqz x # push recieved item hash
+push x
+move lastInput x
+writeRx:
+beqz sp updateQC # skip if nothing on stack
+l x receivedRxMem Setting
+bnez x updateQC # skip if Rx occupied
+pop x
+s receivedRxMem Setting x
+updateQC:
+l x quantityControlSwitch Setting
+beq x quantityControlOn QC # skip if no change
+brnez x 3 # set stacker to 500 if turned off
+s stacker Setting 500
+jr 2
+s fabricator ClearMemory 1 # clear count if turned on
+move quantityControlOn x
+QC:
+beqz quantityControlOn updateRequest # skip if off
+l x fabricator ExportCount
+l y quantityControlDial Setting
+breq x quantity 3 # set stacker if quantity changed
+move quantity x
+s stacker Setting quantity
+blt x y updateRequest # skip if not reached target
+s fabricator ClearMemory 1
+s fabricator On 0
+yield
+s fabricator On 1
+updateRequest:
+move request 0
+move y 1
+lr x fabricator Contents Copper
+jal addRequestBit
+lr x fabricator Contents Gold
+jal addRequestBit
+lr x fabricator Contents Iron
+jal addRequestBit
+lr x fabricator Contents Lead
+jal addRequestBit
+lr x fabricator Contents Nickel
+jal addRequestBit
+lr x fabricator Contents Silicon
+jal addRequestBit
+lr x fabricator Contents Silver
+jal addRequestBit
+lr x fabricator Contents Constantan
+jal addRequestBit
+lr x fabricator Contents Electrum
+jal addRequestBit
+lr x fabricator Contents Invar
+jal addRequestBit
+lr x fabricator Contents Solder
+jal addRequestBit
+lr x fabricator Contents Steel
+jal addRequestBit
+lr x fabricator Contents Astroloy
+jal addRequestBit
+lr x fabricator Contents Hastelloy
+jal addRequestBit
+lr x fabricator Contents Inconel
+jal addRequestBit
+lr x fabricator Contents Stellite
+jal addRequestBit
+lr x fabricator Contents Waspaloy
+jal addRequestBit
+s requestMem request
+j main
+
+addRequestBit:
+slt x x RequestThreshold
+mul x y x
+add request x request
+mul y 2 y
+j ra
+

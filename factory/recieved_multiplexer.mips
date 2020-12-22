@@ -1,0 +1,26 @@
+alias receivedTxMem d0 # read by silo controls
+alias receivedRxMem d1 # written by fab controls
+
+alias x r0
+
+main:
+yield
+jal checkTx
+jal checkRx
+j main
+
+checkTx:
+brez sp ra
+l x receivedTxMem Setting
+bne x -1 ra
+pop x
+s receivedTxMem Setting x
+j ra
+
+checkRx:
+l x receivedRxMem Setting
+beq x -1 ra
+push x
+s receivedRxMem Setting -1
+j ra
+

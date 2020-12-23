@@ -10,17 +10,16 @@ jal checkRx
 j main
 
 checkTx:
-brez sp ra
+breqz sp ra
 l x receivedTxMem Setting
-bne x -1 ra
+bnez x ra
 pop x
 s receivedTxMem Setting x
 j ra
 
 checkRx:
 l x receivedRxMem Setting
-beq x -1 ra
+beqz x ra
 push x
-s receivedRxMem Setting -1
+s receivedRxMem Setting 0
 j ra
-

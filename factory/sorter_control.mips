@@ -1,12 +1,14 @@
 alias sorter d0
 alias requestDownLMem d1
 alias requestDownRMem d2
+alias requestUpMem d3
 
 alias requestDownL r0
 alias requestDownR r1
 alias requestUp r2
 alias occupantHash r3
-alias sendRight r4
+alias output r4
+alias x r2
 
 alias bitA r3
 alias wordA r0
@@ -16,21 +18,29 @@ alias bitOr r5
 alias wordOr r2
 alias i r6
 
+move requestDownL 0
+move requestDownR 0
+
+s sorter On 1
+s sorter Mode 2
+s db Setting 0
+
 main:
-yield
+brdns requestDownLMem 2
 l requestDownL requestDownLMem Setting
+brdns requestDownRMem 2
 l requestDownR requestDownRMem Setting
 sortOccupant:
 ls occupantHash sorter 0 OccupantHash
-beqz occupantHash setRequestUp # skip if not occupied
-jal setSendRight
-s sorter Output sendRight
+beqz occupantHash setRequestUp # skip if not occupie
+jal getOutput
+s sorter Output output
 setRequestUp:
 jal bitwiseOr
-s db Setting requestUp
+s requestUpMem Setting requestUp
 j main
 
-setSendRight:
+getOutput:
 move i 1
 beq occupantHash -404336834 extractBit # copper
 move i 2
@@ -65,12 +75,14 @@ move i 32768
 beq occupantHash -1897868623 extractBit # stellite
 move i 65536
 beq occupantHash 156348098 extractBit # waspaloy
-move sendRight 0
+move output 1
 j ra
 extractBit:
-div occupantHash occupantHash i
-trunc occupantHash occupantHash
-mod sendRight occupantHash 2
+div x requestDownR i
+trunc x x
+mod output x 2
+#seqz output x
+s db Setting output
 j ra
 
 bitwiseOr:
@@ -90,4 +102,3 @@ mul i 2 i
 bgtz wordA bitwiseOrLoop # loop if either word not 0
 bgtz wordB bitwiseOrLoop
 j ra
-

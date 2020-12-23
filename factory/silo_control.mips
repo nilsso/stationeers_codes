@@ -15,26 +15,28 @@ alias x r3
 # Initialize
 l itemHash itemHashMem Setting
 jal getBit
+s silo On 1
 s sorter On 1
 s sorter Mode 2
 s outStacker On 1
 s outStacker Setting OutputQuantity
 s outStacker Mode 1
+move unreceived 0
+s db Setting unreceived
 
 main:
-sort:
+s db Setting unreceived
 ls x sorter 0 OccupantHash
 beqz x restock # skip if not occupied
 seq x itemHash x
 s sorter Output x
 restock:
-l x outStacker Quantity
-bgtz x checkRecieved # skip if stacker not empty
+ls x outStacker 2 Occupied # 2 = processing
+bnez x checkRecieved # skip if stacker not empty
 s silo Open 1
 yield
 s silo Open 0
 checkRecieved:
-beqz unreceived dispense # skip if haven't dispensed
 l x recievedTxMem Setting
 bne x itemHash dispense # skip if not our item hash
 s recievedTxMem Setting 0
@@ -46,7 +48,7 @@ div x x bit
 trunc x x
 mod x x 2 # x = 1 if item requested
 beqz x main # skip if our item not requested
-s outStacker Activate 1
+s outStacker Output 1
 move unreceived 1
 j main
 
@@ -86,4 +88,3 @@ beq itemHash -1897868623 ra # stellite
 move bit 65536
 beq itemHash 156348098 ra # waspaloy
 # cause error somehow?
-

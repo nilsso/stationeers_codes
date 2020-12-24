@@ -1,0 +1,25 @@
+# Factory - Furnace
+# Steel/Electrum
+# pMin: 800kPa (electrum), pMax: 2.4MPa (electrum)
+# tMin: 700K (electrum), tMax: inf
+#
+# Invar/Consantan
+# pMin: 6MPa (invar), pMax: 7MPa (invar)
+# tMin: 1200K (invar), tMax: 1500K (constantan)
+#
+# Solder/Hastelloy/Waspaloy
+# pMin: 2.5MPa (hastelloy), pMax: 2.75MPa (waspaloy)
+# tMin: 950K (hastelloy), tMax: 1000K (hastelloy/waspaloy)
+#
+# Astroloy
+# pMin: 5MPa, pMax: 6MPa
+# tMin: 1200K, tMax: 1400K
+#
+# Inconel
+# pMin: 4.25MPa, pMax: 4.75MPa
+# tMin: 1150K, tMax: 1250K
+#
+# Stellite
+# pMin: 4MPa, pMax: 5MPa
+# tMin: 1700K, tMax: 1900K
+

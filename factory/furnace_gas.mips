@@ -1,0 +1,46 @@
+# Factory - Furnace gas combustor
+define PrimePressure 500 # kPa
+define TankPressureCutoff 50000 # kPa
+define TempDiff 200 # kelvin
+
+alias furnace d0
+alias inPump d1
+alias outPump d2
+alias gasTank d3
+alias fuelAnalyzer d4
+
+alias x r0
+alias y r1
+
+main:
+l x furnace Pressure
+beqz x fuel # furnace empty 
+jal isHot
+beqz x fuel # fuel if not hot
+dump:
+s inPump On 0
+s outPump On 1
+l x furnace Pressure
+yield
+brgtz x -2 # wait for empty
+fuel:
+s inPump On 1
+s outPump On 0
+l x furnace Pressure
+yield
+brlt x PrimePressure -2 # wait for priming
+s inPump On 0
+s outPump On 0
+ignite:
+s furnace Activate 1
+yield
+jal isHot
+brnez x -3 # wait for gas to ignite
+j dump # start dumping
+
+isHot: # x = fuel temp is TempDiff hotter than fuel
+l x furnace Temperature
+l y fuelAnalyzer Temperature
+sub x x TempDiff
+sgt x x y
+j ra

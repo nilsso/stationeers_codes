@@ -3,6 +3,8 @@ alias receivedRxMem d1 # written by fab controls
 
 alias x r0
 
+s receivedTxMem Setting 0
+
 main:
 yield
 jal checkTx
@@ -10,7 +12,7 @@ jal checkRx
 j main
 
 checkTx:
-breqz sp ra
+beqz sp ra
 l x receivedTxMem Setting
 bnez x ra
 pop x
@@ -20,6 +22,7 @@ j ra
 checkRx:
 l x receivedRxMem Setting
 beqz x ra
+s db Setting x
 push x
 s receivedRxMem Setting 0
 j ra

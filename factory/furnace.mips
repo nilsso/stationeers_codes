@@ -1,4 +1,8 @@
 # Factory - Furnace
+# Basic
+# pMin: 100kPa, mPax: inf
+# tMin: 1000K, tMax: inf
+#
 # Steel/Electrum
 # pMin: 800kPa (electrum), pMax: 2.4MPa (electrum)
 # tMin: 700K (electrum), tMax: inf

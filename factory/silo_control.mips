@@ -1,3 +1,4 @@
+# Factory - Silo
 define OutputQuantity 100
 
 alias silo d0
@@ -11,6 +12,7 @@ alias itemHash r0
 alias bit r1
 alias unreceived r2
 alias x r3
+alias y r4
 
 # Initialize
 l itemHash itemHashMem Setting
@@ -22,26 +24,28 @@ s outStacker On 1
 s outStacker Setting OutputQuantity
 s outStacker Mode 1
 move unreceived 0
-s db Setting unreceived
 
 main:
 s db Setting unreceived
 ls x sorter 0 OccupantHash
-beqz x restock # skip if not occupied
+beqz x checkRecieved # skip if not occupied
 seq x itemHash x
 s sorter Output x
+checkRecieved:
+l x recievedTxMem Setting
+bne x itemHash restock # skip if not our item hash
+s recievedTxMem Setting 0
+move unreceived 0
 restock:
 ls x outStacker 2 Occupied # 2 = processing
-bnez x checkRecieved # skip if stacker not empty
+bnez x dispense # skip if stacker not empty
+l y silo Quantity
+beqz y dispense # skip if silo empty
 s silo Open 1
 yield
 s silo Open 0
-checkRecieved:
-l x recievedTxMem Setting
-bne x itemHash dispense # skip if not our item hash
-s recievedTxMem Setting 0
-move unreceived 0
 dispense:
+beqz x main # skip if stacker empty
 bnez unreceived main # skip if waiting for receiver
 l x requestMem Setting
 div x x bit

@@ -1,7 +1,6 @@
 alias sorter d0
 alias requestDownLMem d1
 alias requestDownRMem d2
-alias requestUpMem d3
 
 alias requestDownL r0
 alias requestDownR r1
@@ -37,7 +36,7 @@ jal getOutput
 s sorter Output output
 setRequestUp:
 jal bitwiseOr
-s requestUpMem Setting requestUp
+s db Setting requestUp
 j main
 
 getOutput:

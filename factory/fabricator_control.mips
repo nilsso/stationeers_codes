@@ -4,15 +4,17 @@ alias fabricator d0
 alias quantityControlSwitch d1
 alias quantityControlDial d2
 alias stacker d3
-alias requestMem d4
-alias receivedRxMem d5
+alias receivedRxMem d4
+alias display d5
 
 alias lastInput r0
-alias quantityControlOn r1
-alias quantity r2
-alias request r3
-alias x r4
-alias y r5
+alias lastExpCount r1
+alias currExpCount r2
+alias quantityControlOn r3
+alias quantity r4
+alias request r5
+alias x r6
+alias y r7
 
 s fabricator On 1
 s fabricator ClearMemory 1
@@ -20,8 +22,11 @@ s stacker On 1
 move quantity 500
 s stacker Setting quantity
 move lastInput 0
+s display On 1
+jal updateRequests
 
 main:
+s display Setting sp
 l x fabricator On
 bnez x checkInput
 s stacker Activate 1
@@ -30,14 +35,21 @@ checkInput:
 ls x fabricator 0 OccupantHash
 beq x lastInput writeRx # skip if no change
 move lastInput x
-breqz x writeRx
+beqz x writeRx # skip if change is to no input
 push x # push recieved item hash
+jal updateRequests
 writeRx:
-beqz sp updateQC # skip if nothing on stack
+beqz sp checkExportChange # skip if nothing on stack
 l x receivedRxMem Setting
-bnez x updateQC # skip if Rx occupied
+bnez x checkExportChange # skip if Rx occupied
 pop x
 s receivedRxMem Setting x
+checkExportChange:
+l currExpCount fabricator ExportCount
+beq currExpCount lastExpCount main
+# skip if nothing new crafted
+move lastExpCount currExpCount
+jal updateRequests
 updateQC:
 l x quantityControlSwitch Setting
 beq x quantityControlOn QC # skip if no change
@@ -48,19 +60,21 @@ s fabricator ClearMemory 1 # turned on
 s stacker Setting quantity
 move quantityControlOn x
 QC:
-l x fabricator ExportCount
-#s db Setting x
-beqz quantityControlOn setRequest # skip if off
+#s display Setting currExpCount
+beqz quantityControlOn main # skip if off
 l y quantityControlDial Setting
 breq y quantity 3 # set stacker if quantity changed
 move quantity y
 s stacker Setting quantity
-blt x quantity setRequest # skip if not reached target
+blt currExpCount quantity main # skip if not reached target
 s fabricator ClearMemory 1
 s fabricator On 0
 yield
 s fabricator On 1
-setRequest:
+j main
+
+updateRequests: # check reagent stocks, update request
+push ra
 move request 0
 move y 1
 lr x fabricator Contents Copper
@@ -97,8 +111,9 @@ lr x fabricator Contents Stellite
 jal addRequestBit
 lr x fabricator Contents Waspaloy
 jal addRequestBit
-s requestMem Setting request
-j main
+s db Setting request
+pop ra
+j ra
 
 addRequestBit:
 slt x x RequestThreshold

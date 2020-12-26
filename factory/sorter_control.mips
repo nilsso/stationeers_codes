@@ -1,21 +1,31 @@
+# Factory - Sorter
 alias sorter d0
 alias requestDownLMem d1
 alias requestDownRMem d2
+alias requestUpMem d3
 
 alias requestDownL r0
-alias requestDownR r1
-alias requestUp r2
-alias occupantHash r3
-alias output r4
-alias x r2
 
-alias bitA r3
-alias wordA r0
-alias bitB r4
-alias wordB r1
-alias bitOr r5
+alias requestDownR r1
+
+alias requestUp r2
 alias wordOr r2
+
+alias occupantHash r3
+alias wordA r3
+alias x r3
+alias bitA r3
+
+alias output r4
+alias wordB r4
+alias bitB r4
+alias y r4
+
+alias bitOr r5
+alias z r5
+
 alias i r6
+alias w r6
 
 move requestDownL 0
 move requestDownR 0
@@ -25,18 +35,27 @@ s sorter Mode 2
 s db Setting 0
 
 main:
-brdns requestDownLMem 2
-l requestDownL requestDownLMem Setting
-brdns requestDownRMem 2
-l requestDownR requestDownRMem Setting
 sortOccupant:
 ls occupantHash sorter 0 OccupantHash
-beqz occupantHash setRequestUp # skip if not occupie
+# skip if not occupied
+beqz occupantHash setRequestUp
 jal getOutput
 s sorter Output output
 setRequestUp:
+brdns requestDownLMem 3 # check down left change
+l x requestDownLMem Setting
+seq w x requestDownL
+brdns requestDownRMem 3 # check down right change
+l y requestDownRMem Setting
+seq z y requestDownR
+and z w z
+breqz z main # skip if no down request change
+move requestDownL x
+move requestDownR y
+move wordA requestDownL
+move wordB requestDownR
 jal bitwiseOr
-s db Setting requestUp
+s requestUpMem Setting requestUp
 j main
 
 getOutput:

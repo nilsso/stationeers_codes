@@ -1,7 +1,9 @@
 # Factory - Fabricator Received
 alias fabricator d0
 alias receivedRxMem d1
-alias x d2
+
+alias lastInput r0
+alias x r1
 
 define Hold 1
 define Send 0

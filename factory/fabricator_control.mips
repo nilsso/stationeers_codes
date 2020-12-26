@@ -61,11 +61,8 @@ lr x fabricator Contents Stellite
 jal addRequestBit
 lr x fabricator Contents Waspaloy
 jal addRequestBit
-s db Setting request
-checkReceived:
-l x receivedIC Setting
-breqz x 2
-s receivedIC Setting 0 # clear to signal send RX
+s db Setting request # down R request for sorter
+#s receivedIC Setting 0 # clear to send received RX
 onSwitchEmptyStacker:
 l x fabricator On
 bnez x updateQC

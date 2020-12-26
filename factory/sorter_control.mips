@@ -21,6 +21,7 @@ alias x r12
 
 move requestDownL 0
 move requestDownR 0
+move needUpdate 0
 
 s sorter On 1
 s sorter Mode 2

@@ -5,27 +5,19 @@ alias requestDownRMem d2
 alias requestUpMem d3
 
 alias requestDownL r0
-
 alias requestDownR r1
-
 alias requestUp r2
-alias wordOr r2
-
+alias wordOr r2 # same as request up
 alias occupantHash r3
-alias wordA r3
-alias x r3
-alias bitA r3
-
-alias output r4
-alias wordB r4
-alias bitB r4
-alias y r4
-
-alias bitOr r5
-alias z r5
-
-alias i r6
-alias w r6
+alias wordA r4
+alias output r5
+alias wordB r6
+alias needUpdate r7
+alias bitOr r8
+alias bitA r9
+alias bitB r10
+alias i r11
+alias x r12
 
 move requestDownL 0
 move requestDownR 0
@@ -36,26 +28,29 @@ s db Setting 0
 
 main:
 sortOccupant:
-ls occupantHash sorter 0 OccupantHash
-# skip if not occupied
-beqz occupantHash setRequestUp
+ls occupantHash sorter 0 OccupantHash # skip empty
+beqz occupantHash checkDownLeft
 jal getOutput
 s sorter Output output
-setRequestUp:
-brdns requestDownLMem 3 # check down left change
-l x requestDownLMem Setting
-seq w x requestDownL
-brdns requestDownRMem 3 # check down right change
-l y requestDownRMem Setting
-seq z y requestDownR
-and z w z
-breqz z main # skip if no down request change
+checkDownLeft:
+bdns requestDownLMem checkDownRight # skip unset
+l x requestDownLMem Setting # x = down left mem
+beq x requestDownL checkDownRight # skip unchanged
 move requestDownL x
-move requestDownR y
+move needUpdate 1 # trigger update
+checkDownRight:
+bdns requestDownRMem updateRequest # skip if unset
+l x requestDownRMem Setting # x = down right mem
+beq x requestDownR updateRequest # skip unchanged
+move requestDownR x
+move needUpdate 1 # trigger update
+updateRequest:
+beqz needUpdate main # skip if no update triggered
 move wordA requestDownL
 move wordB requestDownR
 jal bitwiseOr
 s requestUpMem Setting requestUp
+move needUpdate 0
 j main
 
 getOutput:

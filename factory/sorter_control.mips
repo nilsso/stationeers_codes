@@ -21,7 +21,6 @@ alias x r12
 
 move requestDownL 0
 move requestDownR 0
-move needUpdate 0
 
 s sorter On 1
 s sorter Mode 2
@@ -90,12 +89,11 @@ beq occupantHash -1897868623 extractBit # stellite
 move i 65536
 beq occupantHash 156348098 extractBit # waspaloy
 move output 1
-j ra
+j ra # output = 1 (left) if not our item 
 extractBit:
 div x requestDownR i
 trunc x x
 mod output x 2
-#seqz output x
 s db Setting output
 j ra
 
@@ -116,3 +114,4 @@ mul i 2 i
 bgtz wordA bitwiseOrLoop # loop if either word not 0
 bgtz wordB bitwiseOrLoop
 j ra
+

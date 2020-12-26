@@ -1,6 +1,10 @@
 # Factory - Fabricator Received
 alias fabricator d0
 alias receivedRxMem d1
+alias x d2
+
+define Hold 1
+define Send 0
 
 main:
 checkInput:
@@ -9,11 +13,14 @@ beq x lastInput writeRx # skip if no change
 move lastInput x
 beqz x writeRx # skip if change was to empty
 push x # push recieved item hash
-jal updateRequests
+s db Setting Hold # hold until request update
 writeRx:
 beqz sp main # skip if nothing on stack
+l x db Setting
+bne x Send main # skip if holding
 l x receivedRxMem Setting
 bnez x main # skip if Rx occupied
 pop x
 s receivedRxMem Setting x
+s db Setting Hold # hold until request update
 j main

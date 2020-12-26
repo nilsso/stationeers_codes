@@ -6,7 +6,6 @@ alias x r0
 s receivedTxMem Setting 0
 
 main:
-yield
 jal checkTx
 jal checkRx
 j main

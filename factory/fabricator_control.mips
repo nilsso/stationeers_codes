@@ -8,8 +8,7 @@ alias receivedRxMem d4
 alias display d5
 
 alias lastInput r0
-alias lastExpCount r1
-alias currExpCount r2
+alias exportCount r2
 alias quantityControlOn r3
 alias quantity r4
 alias request r5
@@ -26,7 +25,6 @@ s display On 1
 jal updateRequests
 
 main:
-s display Setting sp
 l x fabricator On
 bnez x checkInput
 s stacker Activate 1
@@ -35,7 +33,7 @@ checkInput:
 ls x fabricator 0 OccupantHash
 beq x lastInput writeRx # skip if no change
 move lastInput x
-beqz x writeRx # skip if change is to no input
+beqz x writeRx # skip if change was to empty
 push x # push recieved item hash
 jal updateRequests
 writeRx:
@@ -45,28 +43,27 @@ bnez x checkExportChange # skip if Rx occupied
 pop x
 s receivedRxMem Setting x
 checkExportChange:
-l currExpCount fabricator ExportCount
-beq currExpCount lastExpCount main
-# skip if nothing new crafted
-move lastExpCount currExpCount
+l x fabricator ExportCount
+beq x exportCount main # skip if nothing new crafted
+move exportCount x
 jal updateRequests
 updateQC:
 l x quantityControlSwitch Setting
 beq x quantityControlOn QC # skip if no change
-brnez x 3 # turned off
-s stacker Setting 500
+l y quantityControlDial Setting
+brnez x 3 # branch by turned on/off
+s stacker Setting 500 # turned off
 jr 3
 s fabricator ClearMemory 1 # turned on
-s stacker Setting quantity
 move quantityControlOn x
-QC:
-#s display Setting currExpCount
-beqz quantityControlOn main # skip if off
-l y quantityControlDial Setting
-breq y quantity 3 # set stacker if quantity changed
+breqz quantityControlOn # skip if QC off
+breq y quantity 3 # skip if quantity (dial) unchanged
 move quantity y
 s stacker Setting quantity
-blt currExpCount quantity main # skip if not reached target
+QC:
+s display Setting exportCount
+beqz quantityControlOn main # skip if off
+blt exportCount quantity main # skip if not reached target
 s fabricator ClearMemory 1
 s fabricator On 0
 yield

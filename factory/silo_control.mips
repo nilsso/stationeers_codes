@@ -45,8 +45,8 @@ s silo Open 1
 yield
 s silo Open 0
 dispense:
-beqz x main # skip if stacker empty
 bnez unreceived main # skip if waiting for receiver
+beqz x main # skip if stacker empty
 l x requestMem Setting
 div x x bit
 trunc x x

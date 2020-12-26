@@ -1,0 +1,19 @@
+# Factory - Fabricator Received
+alias fabricator d0
+alias receivedRxMem d1
+
+main:
+checkInput:
+ls x fabricator 0 OccupantHash
+beq x lastInput writeRx # skip if no change
+move lastInput x
+beqz x writeRx # skip if change was to empty
+push x # push recieved item hash
+jal updateRequests
+writeRx:
+beqz sp main # skip if nothing on stack
+l x receivedRxMem Setting
+bnez x main # skip if Rx occupied
+pop x
+s receivedRxMem Setting x
+j main

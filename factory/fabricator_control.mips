@@ -1,77 +1,30 @@
+# Factory - Fabricator Control
 define RequestThreshold 100
 
 alias fabricator d0
-alias quantityControlSwitch d1
-alias quantityControlDial d2
-alias stacker d3
-alias receivedRxMem d4
+alias receivedIC d1
+alias qcSwitch d2
+alias qcDial d3
+alias stacker d4
 alias display d5
 
-alias lastInput r0
-alias exportCount r2
-alias quantityControlOn r3
-alias quantity r4
-alias request r5
-alias x r6
-alias y r7
+alias exportCount r0
+alias qcOn r1
+alias quantity r2
+alias request r3
+alias x r4
+alias y r5
 
 s fabricator On 1
 s fabricator ClearMemory 1
 s stacker On 1
 move quantity 500
 s stacker Setting quantity
-move lastInput 0
 s display On 1
-jal updateRequests
 
 main:
-l x fabricator On
-bnez x checkInput
-s stacker Activate 1
-s fabricator On 1
-checkInput:
-ls x fabricator 0 OccupantHash
-beq x lastInput writeRx # skip if no change
-move lastInput x
-beqz x writeRx # skip if change was to empty
-push x # push recieved item hash
-jal updateRequests
-writeRx:
-beqz sp checkExportChange # skip if nothing on stack
-l x receivedRxMem Setting
-bnez x checkExportChange # skip if Rx occupied
-pop x
-s receivedRxMem Setting x
-checkExportChange:
-l x fabricator ExportCount
-beq x exportCount main # skip if nothing new crafted
-move exportCount x
-jal updateRequests
-updateQC:
-l x quantityControlSwitch Setting
-beq x quantityControlOn QC # skip if no change
-l y quantityControlDial Setting
-brnez x 3 # branch by turned on/off
-s stacker Setting 500 # turned off
-jr 3
-s fabricator ClearMemory 1 # turned on
-move quantityControlOn x
-breqz quantityControlOn # skip if QC off
-breq y quantity 3 # skip if quantity (dial) unchanged
-move quantity y
-s stacker Setting quantity
-QC:
-s display Setting exportCount
-beqz quantityControlOn main # skip if off
-blt exportCount quantity main # skip if not reached target
-s fabricator ClearMemory 1
-s fabricator On 0
-yield
-s fabricator On 1
-j main
-
-updateRequests: # check reagent stocks, update request
-push ra
+updateRequests:
+# check reagent stocks, update requests
 move request 0
 move y 1
 lr x fabricator Contents Copper
@@ -109,8 +62,38 @@ jal addRequestBit
 lr x fabricator Contents Waspaloy
 jal addRequestBit
 s db Setting request
-pop ra
-j ra
+checkReceived:
+l x receivedIC Setting
+breqz x 2
+s receivedIC Setting 0 # clear to signal send RX
+onSwitchEmptyStacker:
+l x fabricator On
+bnez x updateQC
+s stacker Activate 1
+s fabricator On 1
+updateQC:
+l x qcSwitch Setting
+beq x qcOn QC # skip if no change
+l y qcDial Setting
+brnez x 3 # branch by turned on/off
+s stacker Setting 500 # turned off
+jr 2
+s fabricator ClearMemory 1 # turned on
+move qcOn x
+beqz qcOn QC # skip if QC off
+beq y quantity QC # skip if quantity unchanged
+move quantity y
+s stacker Setting quantity
+QC:
+l x fabricator ExportCount
+s display Setting x
+beqz qcOn main # skip if off
+blt x quantity main # skip if not reached target
+s fabricator ClearMemory 1
+s fabricator On 0
+yield
+s fabricator On 1
+j main
 
 addRequestBit:
 slt x x RequestThreshold

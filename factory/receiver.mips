@@ -1,0 +1,22 @@
+# Factory - Receiver
+alias receiver d0
+alias receivedRxMem d1
+
+alias lastInput r0
+alias x r1
+
+main:
+checkInput:
+ls x receiver 0 OccupantHash
+beq x lastInput writeReceived # skip if no change
+move lastInput x
+beqz x writeReceived # skip if change was to empty
+push x # push recieved item hash
+writeReceived:
+beqz sp main # skip if stack empty
+l x receivedRxMem Setting
+bnez x main # skip if Rx occupied
+pop x
+s receivedRxMem Setting x
+s db Setting x
+j main

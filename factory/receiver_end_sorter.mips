@@ -1,0 +1,58 @@
+# Factory - Receiver End Sorter
+alias sorter d0
+alias receivedRxMem d1
+
+alias lastInput r0
+alias x r1
+
+main:
+checkInput:
+ls x receiver 0 OccupantHash
+beq x lastInput writeReceived # skip if no change
+move lastInput x
+beqz x writeReceived # skip if change was to empty
+push x # push recieved item hash
+writeReceived:
+beqz sp main # skip if stack empty
+l x receivedRxMem Setting
+bnez x main # skip if Rx occupied
+pop x
+s receivedRxMem Setting x
+sortOccupant:
+ls occupantHash sorter 0 OccupantHash # skip empty
+beqz occupantHash main
+move i 1
+beq occupantHash -404336834 extractBit # copper
+move i 2
+beq occupantHash 226410516 extractBit # gold
+move i 4
+beq occupantHash -1301215609 extractBit # iron
+move i 8
+beq occupantHash 2134647745 extractBit # lead
+move i 16
+beq occupantHash -1406385572 extractBit # nickel
+move i 32
+beq occupantHash -290196476 extractBit # silicon
+move i 64
+beq occupantHash -929742000 extractBit # silver
+move i 128
+beq occupantHash 1058547521 extractBit # constantan
+move i 256
+beq occupantHash 502280180 extractBit # electrum
+move i 512
+beq occupantHash -297990285 extractBit #invar
+move i 1024
+beq occupantHash -82508479 extractBit # solder
+move i 2048
+beq occupantHash -654790771 extractBit # steel
+move i 4096
+beq occupantHash 412924554 extractBit # astroloy
+move i 8192
+beq occupantHash 1579842814 extractBit # hastelloy
+move i 16384
+beq occupantHash -787796599 extractBit # inconel
+move i 32768
+beq occupantHash -1897868623 extractBit # stellite
+move i 65536
+beq occupantHash 156348098 extractBit # waspaloy
+j main

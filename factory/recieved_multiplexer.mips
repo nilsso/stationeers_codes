@@ -1,27 +1,57 @@
-alias receivedTxMem d0 # read by silo controls
-alias receivedRxMem d1 # written by fab controls
+# Factory - Received Multiplexer
+alias receivedRxMem d0 # written by fab controls
+alias receivedTxMem d1 # read by silo controls
+alias resetSwitch d2
 
 alias x r0
 
+s receivedRxMem Setting 0
 s receivedTxMem Setting 0
 
 main:
-jal checkTx
-jal checkRx
-j main
-
-checkTx:
-beqz sp ra
-l x receivedTxMem Setting
-bnez x ra
-pop x
-s receivedTxMem Setting x
-j ra
-
 checkRx:
 l x receivedRxMem Setting
-beqz x ra
-s db Setting x
+beqz x reset # skip if nothing new
+jal checkItem # skip if not a hash we care about
 push x
-s receivedRxMem Setting 0
-j ra
+s receivedRxMem Setting 0 # clear RX
+reset:
+l x resetSwitch Setting
+beqz x checkTx # skip if reset off
+breqz sp 3 # dump the stack
+pop x
+jr -2
+s receivedTxMem Setting -1 # -1 for reset
+j main
+checkTx:
+l x receivedTxMem Setting
+brne x -1 2 # remove reset value
+s receivedTxMem Setting 0
+beqz sp main # skip if stack empty
+bnez x main # skip if TX not yet received
+pop x
+s receivedTxMem Setting x # set TX
+s db Setting x
+j main
+
+checkItem:
+beq x -404336834 ra # copper
+beq x 226410516 ra # gold
+beq x -1301215609 ra # iron
+beq x 2134647745 ra # lead
+beq x -1406385572 ra # nickel
+beq x -290196476 ra # silicon
+beq x -929742000 ra # silver
+beq x 1058547521 ra # constantan
+beq x 502280180 ra # electrum
+beq x -297990285 ra #invar
+beq x -82508479 ra # solder
+beq x -654790771 ra # steel
+beq x 412924554 ra # astroloy
+beq x 1579842814 ra # hastelloy
+beq x -787796599 ra # inconel
+beq x -1897868623 ra # stellite
+beq x 156348098 ra # waspaloy
+beq x 1724793494 ra # coal
+beq x -983091249 ra # cobalt
+j checkTx

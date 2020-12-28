@@ -1,0 +1,18 @@
+alias mixer d0
+alias o2Meter d1
+alias h2Meter d2
+
+alias x r0
+alias y r1
+
+define O2RATIO 33.333
+
+loop:
+l x o2Meter Temperature
+l y h2Meter Temperature
+div x x y
+mul x x O2RATIO
+floor x x
+s mixer Setting x
+s db Setting x
+j loop

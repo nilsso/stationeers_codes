@@ -55,40 +55,44 @@ move needUpdate 0
 j main
 
 getOutput:
-move i 1
+mul i 2 i # 1
 beq occupantHash -404336834 extractBit # copper
-move i 2
+mul i 2 i # 2
 beq occupantHash 226410516 extractBit # gold
-move i 4
+mul i 2 i # 4
 beq occupantHash -1301215609 extractBit # iron
-move i 8
+mul i 2 i # 8
 beq occupantHash 2134647745 extractBit # lead
-move i 16
+mul i 2 i # 16
 beq occupantHash -1406385572 extractBit # nickel
-move i 32
+mul i 2 i # 32
 beq occupantHash -290196476 extractBit # silicon
-move i 64
+mul i 2 i # 64
 beq occupantHash -929742000 extractBit # silver
-move i 128
+mul i 2 i # 128
 beq occupantHash 1058547521 extractBit # constantan
-move i 256
+mul i 2 i # 256
 beq occupantHash 502280180 extractBit # electrum
-move i 512
+mul i 2 i # 512
 beq occupantHash -297990285 extractBit #invar
-move i 1024
+mul i 2 i # 1024
 beq occupantHash -82508479 extractBit # solder
-move i 2048
+mul i 2 i # 2048
 beq occupantHash -654790771 extractBit # steel
-move i 4096
+mul i 2 i # 4096
 beq occupantHash 412924554 extractBit # astroloy
-move i 8192
+mul i 2 i # 8192
 beq occupantHash 1579842814 extractBit # hastelloy
-move i 16384
+mul i 2 i # 16384
 beq occupantHash -787796599 extractBit # inconel
-move i 32768
+mul i 2 i # 32768
 beq occupantHash -1897868623 extractBit # stellite
-move i 65536
+mul i 2 i # 65536
 beq occupantHash 156348098 extractBit # waspaloy
+mul i 2 i # 131072
+beq occupantHash 1724793494 extractBit # ore (coal)
+mul i 2 i # 262144
+beq occupantHash -983091249 extractBit # ore (cobalt)
 move output 1
 j ra # output = 1 (left) if not our item 
 extractBit:

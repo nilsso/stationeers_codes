@@ -1,28 +1,35 @@
 # Factory - Fabricator Control
 define RequestThreshold 100
+define ReceivedWaitDuration 240
 
 alias fabricator d0
-alias receivedIC d1
-alias qcSwitch d2
-alias qcDial d3
-alias stacker d4
-alias display d5
+alias qcSwitch d1
+alias qcDial d2
+alias stacker d3
+alias ledStacker d4 # stacker quantity
+alias ledQC d5 # QC count
 
 alias exportCount r0
 alias qcOn r1
 alias quantity r2
 alias request r3
-alias x r4
-alias y r5
+alias receivedWait r4
+alias x r5
+alias y r6
 
+move qcOn 0
+move quantity 500
 s fabricator On 1
 s fabricator ClearMemory 1
 s stacker On 1
-move quantity 500
 s stacker Setting quantity
-s display On 1
+s ledStacker On 1
+s ledStacker Color 4 # red
+s ledQC Color 2 # green
 
 main:
+ls x stacker 2 Quantity
+s ledStacker Setting x # how much in stacker
 updateRequests:
 # check reagent stocks, update requests
 move request 0
@@ -62,30 +69,34 @@ jal addRequestBit
 lr x fabricator Contents Waspaloy
 jal addRequestBit
 s db Setting request # down R request for sorter
-#s receivedIC Setting 0 # clear to send received RX
-onSwitchEmptyStacker:
+
+emptyStacker:
 l x fabricator On
-bnez x updateQC
+bnez x updateQCOn
 s stacker Activate 1
 s fabricator On 1
-updateQC:
+
+updateQCOn:
 l x qcSwitch Setting
-beq x qcOn QC # skip if no change
-l y qcDial Setting
-brnez x 3 # branch by turned on/off
-s stacker Setting 500 # turned off
+beq x qcOn updateQCQuantity # skip if unchanged
+breq x 1 3 # branch by turned on/off
+s stacker Setting 500 # x = 1, turned off
 jr 2
-s fabricator ClearMemory 1 # turned on
+s fabricator ClearMemory 1 # x = 0, turned on
+s ledQC On x
 move qcOn x
-beqz qcOn QC # skip if QC off
-beq y quantity QC # skip if quantity unchanged
-move quantity y
+
+updateQCQuantity:
+l x qcDial Setting
+beq x quantity QC # skip if quantity unchanged
+move quantity x
 s stacker Setting quantity
+
 QC:
-l x fabricator ExportCount
-s display Setting x
 beqz qcOn main # skip if off
-blt x quantity main # skip if not reached target
+l x fabricator ExportCount
+s ledQC Setting x # how much exported
+brlt x quantity 5 # skip if not reached target
 s fabricator ClearMemory 1
 s fabricator On 0
 yield

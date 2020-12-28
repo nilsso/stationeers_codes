@@ -33,6 +33,7 @@ seq x itemHash x
 s sorter Output x
 checkRecieved:
 l x recievedTxMem Setting
+brne x -1 3 # hard reset switch
 bne x itemHash restock # skip if not our item hash
 s recievedTxMem Setting 0
 move unreceived 0
@@ -45,8 +46,8 @@ s silo Open 1
 yield
 s silo Open 0
 dispense:
-bnez unreceived main # skip if waiting for receiver
 beqz x main # skip if stacker empty
+bnez unreceived main # skip if waiting for receiver
 l x requestMem Setting
 div x x bit
 trunc x x

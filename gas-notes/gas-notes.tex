@@ -1,0 +1,109 @@
+% arara: lualatex: {shell: 1}
+\documentclass{article}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{minted}
+\usepackage{mathpazo}
+\usepackage{amsmath}
+\usepackage{amssymb}
+%\usepackage{amsthm}
+%\usepackage{mathrsfs}
+\usepackage{mathtools}
+%\usepackage{calc}
+%\usepackage{xfrac}
+
+\hypersetup{
+    colorlinks=true
+}
+
+\DeclareMathOperator{\moles}{\mathrm{mol}}
+\DeclareMathOperator{\Hyd}{\mathrm{H}_2}
+\DeclareMathOperator{\Nit}{\mathrm{N}_2}
+\DeclareMathOperator{\Ox}{\mathrm{O}_2}
+\DeclareMathOperator{\Pol}{\mathrm{X}}
+\DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
+\DeclareMathOperator{\Water}{\mathrm{H}_2\mathrm{O}}
+\DeclareMathOperator{\NiOx}{\mathrm{N}_2\mathrm{O}}
+
+\title{Stationeers Notes}
+\begin{document}
+
+\section{Gas Calculations and MIPS}
+
+The atmospherics simulation in Stationeers currently features seven
+gasses that behave according to most ideal gas laws.
+
+\begin{center}
+    \begin{tabular}{*3l}
+        \toprule
+        Name & Formula ($g$) & Specific heat ($c_g$) \\
+        \midrule
+        Hydrogen & $\Hyd$ & 20.4 \\
+        Nitrogen & $\Nit$ & 20.6 \\
+        Oxygen & $\Ox$ & 21.1 \\
+        Pollutant & $\Pol$ & 24.8 \\
+        Carbon dioxide & $\CDiox$ & 28.2 \\
+        Water & $\Water$ & 72 \\
+        Nitrous oxide & $\NiOx$ & 23 \\
+        \bottomrule
+    \end{tabular}
+\end{center}
+Where specific heat is given in joules per mole Kelvin
+(and note that a joule is equivalent to a liter kilo-pascal).
+We will index these gases via their formula, and let $G$ be the set of indices:
+\[
+    G = \{\
+        \Hyd,\
+        \Nit,\
+        \Ox,\
+        \Pol,\
+        \CDiox,\
+        \Water,\
+        \NiOx\
+    \}.
+\]
+
+\subsection{Moles and pressures in compositions}
+
+Fix $A$ a gas mixture, and let $g\in G$ be the index of one of the seven gases.
+We define $n_A$ to be the total number of moles of any and all gases in $A$,
+and $n_A(g)$ to be the number of moles of gas $g$ specifically in $A$.
+
+%For example, if $A=(50\ \moles\ \CDiox,\ 300\ \moles\ \Ox)$, then:
+%\begin{itemize}
+    %\item $n_A(\CDiox) = 50$,
+    %\item $n_A(\Ox) = 300$,
+    %\item $n_A = 350$.
+%\end{itemize}
+
+Note that $P_{AB}$ is the sum of the pressures (partial pressures)
+$P_A$ and $P_B$.
+
+\subsection{Final temperature of mixing two gas compositions}
+
+Let $A$ and $B$ be gas compositions, and let $P_A$, $T_A$ and $n_A(g)$ be the
+kilo-pascal pressure, Kelvin temperature, and moles of gas $g\in G$ for
+composition $A$; similarly for $B$.
+To calculate $T_{AB}$ the final temperature of combining the mixtures in a
+one-to-one ratio with a \href{https://stationeers-wiki.com/Pipe_Gas_Mixer}{gas mixer}:
+\begin{equation}
+    T_{AB}
+    = \frac{T_A S_A+T_B S_B}{S_A+S_B}
+\end{equation}
+Where, for $M_1$ either $A$ or $B$ and
+$M_2=A$ if $M_1$ is $B$, or
+$M_2=B$ if $M_1$ is $A$
+\begin{equation}
+    S_{M_1} = p_{M_1}s_{M_1}
+\end{equation}
+And where
+\begin{gather}
+    p_{M_1} = \frac{P_{M_2}}{P_{AB}} \\
+    s_{M_1} = \sum_{g\in G}s_{M_1}(g) \\
+    s_{M_1}(g) = \frac{n_{M_1}(g)}{n_{M_1}}\cdot c_g.
+\end{gather}
+
+\inputminted{text}{final-temp.mips}
+
+\end{document}
+

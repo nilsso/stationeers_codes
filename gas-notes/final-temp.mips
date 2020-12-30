@@ -1,0 +1,76 @@
+alias sensorA d0
+alias sensorB d1
+
+alias PB r0
+alias PA r1
+alias PAB r2 # P_{AB} = P_A+P_B
+alias ptr r3
+alias TAB r4 # T_{AB} (final result)
+alias TM r5 # T_{M_1}
+alias SM r6 # S_{M_1}
+alias TMSM r7 # T_{M_1}*S_{M_1}
+alias pM r8 # p_{M_1}
+alias sM r9 # s_{M_1}
+alias nM r10 # n_{M_1}
+alias nMg r11
+alias cg r12 # c_g
+alias numerator r13
+alias denominator r14
+
+main:
+l PA sensorA Pressure # P_A kPa
+l PB sensorB Pressure # P_B kPa
+add PAB PA PB
+move ptr 0
+move numerator 0
+move denominator 0
+jal MIncrement # M_1 = A, M_2 = B
+jal MIncrement # M_1 = B, M_2 = A
+div TAB numerator denominator # equation (1)
+j main
+
+MIncrement: # equation (2)
+push ra
+alias sensor dr3 # M_1 sensor d(ptr)
+l nM sensor Quantity # nM = n_{M_1}
+move sM 0
+# equation(4), and equation (5) for each gas
+l nMg sensor RatioVolatiles # Hydrogen
+move cg 20.4
+jal sMgIncrement
+l nMg sensor RatioNitrogen
+move cg 20.6
+jal sMgIncrement
+l nMg sensor RatioOxygen
+move cg 21.1
+jal sMgIncrement
+l nMg sensor RatioPollutant
+move cg 24.8
+jal sMgIncrement
+l nMg sensor RatioCarbonDioxide
+move cg 28.2
+jal sMgIncrement
+l nMg sensor RatioWater
+move cg 72
+jal sMgIncrement
+l nMg sensor RatioNitrousOxide
+move cg 23
+jal sMgIncrement
+# equation (3)
+alias pM rr3 # M_2 pressure r(ptr)
+div pM pM PAB
+# equation (2)
+mul SM pM sM
+l TM sensor Temperature
+mul TMSM TM SM
+add numerator numerator TMSM
+add denominator denominator SM
+add ptr 1 ptr # advance composition index
+pop ra
+j ra
+
+sMgIncrement:
+mul nMg nMg nM # n_M(g) = gas ratio * n_M
+mul nMg nMg cg
+add sM sM nMg # s_{M_1} += s_{M_1}(g)
+j ra

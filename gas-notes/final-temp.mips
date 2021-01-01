@@ -27,12 +27,13 @@ move denominator 0
 jal MIncrement # M_1 = A, M_2 = B
 jal MIncrement # M_1 = B, M_2 = A
 div TAB numerator denominator # equation (1)
+s db Setting TAB
 j main
 
 MIncrement: # equation (2)
 push ra
 alias sensor dr3 # M_1 sensor d(ptr)
-l nM sensor Quantity # nM = n_{M_1}
+l nM sensor TotalMoles # nM = n_{M_1}
 move sM 0
 # equation(4), and equation (5) for each gas
 l nMg sensor RatioVolatiles # Hydrogen

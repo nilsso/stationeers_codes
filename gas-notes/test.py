@@ -9,29 +9,48 @@ def TAB(TA, nA, TB, nB):
 def P(V, n, T):
     return n*R*T/V
 
-# furnace (initial) conditions:
 VF = 1000
-PF0 = 50000
-TF0 = 200
-nF0 = (PF0*VF)/(R*TF0)
-nF0_ = nF0
-# furnace target conditions:
-PF = 50000
-TF = 400
-# hot gas initial conditions:
 VH = 5 * 100
-# TH0 = 2500
-TH0 = 2500 - random() * 250
-# nH0 = 500
-nH0 = 500 + random() * 2000
-# PH0 = P(VH0, nH0, TH0)
-# cold gas initial conditions:
 VC = 5 * 100
-TC0 = 200
-# TC0 = 200 + random() * 100
-nC0 = 500
-# nC0 = 500 + random() * 2000
-# PC0 = P(VC, vC, TC)
+
+TF0 = 284.69
+PF0 = 3799.38
+nF0 = 1605.11
+
+TF = 1728.95
+PF = 1708.81
+
+TH0 = 2356.82
+nH0 = 1300.15
+TC0 = 250.54
+nC0 = 1300.15
+
+if not TF0:
+    # furnace (initial) conditions:
+    # PF0 = 50000
+    PF0 = random() * 50000
+    # TF0 = 200
+    TF0 = random() * 1800
+    nF0 = (PF0*VF)/(R*TF0)
+    # furnace target conditions:
+    # PF = 50000
+    PF = random() * 50000
+    # TF = 400
+    TF = random() * 1800
+    # hot gas initial conditions:
+    # TH0 = 2500
+    TH0 = 2500 - random() * 250
+    # nH0 = 500
+    nH0 = 500 + random() * 2000
+    # PH0 = P(VH0, nH0, TH0)
+    # cold gas initial conditions:
+    # TC0 = 200
+    TC0 = 200 + random() * 100
+    # nC0 = 500
+    nC0 = 500 + random() * 2000
+    # PC0 = P(VC, vC, TC)
+
+nF0_ = nF0
 
 print(f'''\
 TF (target temperature) : TF = {TF:.2f} K
@@ -101,49 +120,13 @@ H mixer setting : RH = round(rH/(rH+rC)*100) = {RH}%
 C mixer setting : RC = 100 - RH = {RC}%
 
 ---
-VALIDATING:
+VALIDATING
 
-initial furnace conditions
-TF0 = {TF0:.2f} K
-PF0 = {PF0:.2f} kPa
-nF0 = {nF0_:.2f} moles
-
-expected results
-TF = {TF:.2f}
-PF = {PF:.2f}
-''')
-
-nI = nH + nC
-TI = (TH0*nH+TC0*nC)/(nH+nC)
-TF = (TI*nI+TF0*nF0)/(nI+nF0)
-nF = nF0+nI
-PF = nF*R*TF/VF
-
-print(f'''\
-initial conditions of H and C
-TH0 = {TH0:.2f} K
-nH0 = {nH0:.2f} moles
-TC0 = {TC0:.2f} K
-nC0 = {nH0:.2f} moles
-''')
-
-if nF0 != nF0_:
-    print(f'''\
-dumped {round(nF0_-nF0, 2)} moles from nF0
-''')
-
-print(f'''\
-calculated moles H/C to compose
-nH = {nH:.2f} moles
-nC = {nC:.2f} moles
-
-mixed {RH}%/{RC}% until {nI:.2f} moles
-
-added composition to F0
-nF (result) = {nF:.2f} moles = {nF0:.2f} + {nI:.2f} moles
-TF (result) = {TF:.2f} K
-PF (result) = {PF:.2f} kPa
-''')
+nI = nH + nC = {nH:n} + {nC:n} = {nI:n}
+TI = (TH0*nH+TC0*nC)/nI = {(TH0*nH+TC0*nC)/nI:n}
+nF = nF0 + nI = {nF0:n} + nI = {nF0+nI:n}
+TF = (TF0*nF0+TI*nI)/(nF0+nI) = {(TF0*nF0+TI*nI)/(nF0+nI):n}
+PF = nF*R*TF/VF = {nF*R*TF/VF:n}''')
 
 
 

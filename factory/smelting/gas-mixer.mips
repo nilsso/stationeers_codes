@@ -1,0 +1,48 @@
+alias aAnalyzer d0
+alias bAnalyzer d1
+alias cAnalyzer d2
+alias PcMem d3
+alias TcMem d4
+alias VcMem d5
+
+define MixerHash 2104106366
+define R 8.31446261815324
+define cp 28.2 # specific heat of CO2
+
+alias na r0
+alias nb r1
+alias nc r2
+alias Ra r3
+alias x r4
+alias y r5
+alias z r6
+
+main:
+
+calcMoles:
+l x PcMem Setting # x = Pc
+l y VcMem Setting # y = Vc
+mul nc x y # nc = Pc*Vc
+l y TcMem Setting # y = Tc
+div nc nc R # nc = Pc*Vc/R
+div nc nc y # nc = Pc*Vc/(R*Tc) : eq 1
+l x bAnalyzer Temperature # x = Tb
+sub y y x # y = Tc-Tb
+mul na nc y # na = nc*(Tc-Tb)
+l y aAnalyzer Temperature # y = Ta
+sub x y x # x = Ta-Tb
+div na na x # na = nc*(Tc-Tb)/(Ta-Tb) : eq 2
+sub nb nc na # nb = nc-na
+
+calcRatio:
+l x aAnalyzer TotalMoles # x = na0
+div x na x # x = ra = na/na0
+l y bAnalyzer TotalMoles # y = nb0
+div y nb y # y = rb = nb/nb0
+add y x y # y = ra+rb
+div Ra x y # Ra = ra/(ra+rb)
+mul Ra Ra 100
+
+sb MixerHash Setting Ra
+
+j main

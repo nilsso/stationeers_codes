@@ -1,0 +1,53 @@
+alias furnace d0
+alias fuelButton d1
+alias dumpButton d2
+alias pipeAnalyzer d3
+alias roomVent d4
+alias roomSensor d5
+
+define FuelAmount 500
+define FuelSpeed 10
+
+alias x r0
+alias y r1
+
+s roomVent Mode 0
+s roomVent On 0
+
+main:
+s db Setting 0
+l x fuelButton Setting
+beq x 1 fuel
+l x dumpButton Setting
+beq x 1 dump
+j main
+
+fuel:
+s db Setting 1
+# Fill furnace
+s furnace SettingInput FuelSpeed
+l x furnace Pressure
+brlt x FuelAmount -1
+s furnace SettingInput 0
+# Fill room
+s roomVent Mode 0
+s roomVent On 1
+l x pipeAnalyzer Pressure
+brgtz x -1
+s roomVent On 0
+j ra
+
+dump:
+s db Setting 2
+# Dump furnace
+s furnace SettingOutput 100
+l x furnace Pressure
+brgtz x -1
+s furnace SettingOutput 0
+# Dump room
+s roomVent Mode 1
+s roomVent On 1
+l x roomSensor Pressure
+brgtz x -1
+s roomVent On 0
+j ra

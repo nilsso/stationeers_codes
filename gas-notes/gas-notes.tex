@@ -1,16 +1,18 @@
 % arara: lualatex: {shell: 1}
 \documentclass{article}
+\usepackage{geometry}[margin=1in]
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{minted}
+\usepackage{multicol}
 \usepackage{mathpazo}
 \usepackage{amsmath}
 \usepackage{amssymb}
 %\usepackage{amsthm}
-%\usepackage{mathrsfs}
 \usepackage{mathtools}
+\usepackage{xfrac}
+%\usepackage{mathrsfs}
 %\usepackage{calc}
-%\usepackage{xfrac}
 
 \hypersetup{
     colorlinks=true
@@ -28,7 +30,9 @@
 \title{Stationeers Notes}
 \begin{document}
 
-\section{Gas Calculations and MIPS}
+\title{Gas Calculations and MIPS}
+
+\maketitle{}
 
 The atmospherics simulation in Stationeers currently features seven
 gasses that behave according to most ideal gas laws.
@@ -63,7 +67,7 @@ We will index these gases via their formula, and let $G$ be the set of indices:
     \}.
 \]
 
-\subsection{Moles and pressures in compositions}
+\section{Moles and pressures in compositions}
 
 Fix $A$ a gas mixture, and let $g\in G$ be the index of one of the seven gases.
 We define $n_A$ to be the total number of moles of any and all gases in $A$,
@@ -79,31 +83,86 @@ and $n_A(g)$ to be the number of moles of gas $g$ specifically in $A$.
 Note that $P_{AB}$ is the sum of the pressures (partial pressures)
 $P_A$ and $P_B$.
 
-\subsection{Final temperature of mixing two gas compositions}
+\pagebreak
+\section{Combining gas compositions}
 
-Let $A$ and $B$ be gas compositions, and let $P_A$, $T_A$ and $n_A(g)$ be the
-kilo-pascal pressure, Kelvin temperature, and moles of gas $g\in G$ for
-composition $A$; similarly for $B$.
-To calculate $T_{AB}$ the final temperature of combining the mixtures in a
-one-to-one ratio with a \href{https://stationeers-wiki.com/Pipe_Gas_Mixer}{gas mixer}:
-\begin{equation}
+Let $A$ and $B$ be gas compositions, and let $P_A$ be the kilo-pascal pressure
+of composition $A$, $T_A$ the kelvin temperature, $n_A$ the total moles,
+and $n_A(g)$ the moles of gas $g$; similarly for $B$.
+Then for $T_{AB}$ the resulting temperature of combining the compositions:
+\begin{equation}\label{eq:T_AB}
+    T_{AB}
+    = \frac{T_A S_A+T_B S_B}{S_A+S_B}
+\end{equation}
+Where, for $M$ either $A$ or $B$
+\begin{equation}\label{eq:S_M1}
+    S_M = \frac{s_M}{n_M}
+\end{equation}
+And where
+\vspace{-1em}
+\begin{multicols}{2}
+    \noindent
+    \begin{equation}\label{eq:s_M}
+        \smash{s_M = \sum_{g\in G}s_M(g)}
+    \end{equation}
+    \begin{equation}\label{eq:s_M1g}
+        \smash{s_M(g) = n_M(g)\cdot c_g}
+    \end{equation}
+\end{multicols}
+
+\section{Mixing two gas compositions}
+
+\pagebreak
+\subsection{Final temperature}
+
+Let $A$ and $B$ be gas compositions, and let $P_A$, $T_A$, $r_A$ and $n_A(g)$ be
+the kilo-pascal pressure, Kelvin temperature, mixer ratio, and moles of gas
+$g\in G$ for composition $A$; similarly for $B$.
+The final temperature $T_{AB}$ of mixing the compositions via either a
+\href{https://stationeers-wiki.com/Pipe_Gas_Mixer}{gas mixer}
+in a 1:1 ratio, or moving all gas from one valume to another, is calculated:
+\begin{equation}\label{eq:T_AB}
     T_{AB}
     = \frac{T_A S_A+T_B S_B}{S_A+S_B}
 \end{equation}
 Where, for $M_1$ either $A$ or $B$ and
 $M_2=A$ if $M_1$ is $B$, or
 $M_2=B$ if $M_1$ is $A$
-\begin{equation}
-    S_{M_1} = p_{M_1}s_{M_1}
+\begin{equation}\label{eq:S_M1}
+    S_{M_1} = p_{M_1}r_{M_1}s_{M_1}
 \end{equation}
 And where
-\begin{gather}
-    p_{M_1} = \frac{P_{M_2}}{P_{AB}} \\
-    s_{M_1} = \sum_{g\in G}s_{M_1}(g) \\
-    s_{M_1}(g) = \frac{n_{M_1}(g)}{n_{M_1}}\cdot c_g.
-\end{gather}
+%\setlength{\multicolsep}{6.0pt plus 2.0pt minus 1.5pt}% 50% of original values
+\vspace{-1em}
+\begin{multicols}{3}
+    \noindent
+    \begin{equation}\label{eq:p_M1}
+        p_{M_1} = \smash{\frac{P_{M_2}}{P_{AB}}}
+    \end{equation}
+    \begin{equation}\label{eq:s_M1}
+        s_{M_1} = \smash{\sum_{g\in G}s_{M_1}(g)}
+    \end{equation}
+    \begin{equation}\label{eq:s_M1g}
+        s_{M_1}(g) = \smash{\frac{n_{M_1}(g)\cdot c_g}{n_{M_1}}}
+    \end{equation}
+\end{multicols}
 
-\inputminted{text}{final-temp.mips}
+\subsection{Total moles in $AB$}
+
+Considering that one composition may have more moles per volume than the other,
+the mixer will only function for as long as both compositions have pressure.
+
+\subsection{Final pressure}
+
+Using the ideal gas law,
+where $V_{AB}$ is the sum of volumes down downstream from the mixer,
+$n_{AB}=n_A+n_B$ the total moles,
+and $R\doteq 8.314$ the ideal gas law constant:
+\begin{equation}\label{eq:P_AB}
+    P_{AB} = \frac{n_{AB}\cdot R\cdot T_{AB}}{V_{AB}}
+\end{equation}
+
+%\inputminted{text}{final-temp.mips}
 
 \end{document}
 

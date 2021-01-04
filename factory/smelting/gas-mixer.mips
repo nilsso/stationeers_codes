@@ -1,48 +1,116 @@
-alias aAnalyzer d0
-alias bAnalyzer d1
-alias cAnalyzer d2
-alias PcMem d3
-alias TcMem d4
-alias VcMem d5
+# Factory - CO2 Furnace Gas Mixer
+alias Furnace d0
+alias HAnalyzer d1
+alias CAnalyzer d2
+alias IAnalyzer d3
+alias InputDumpPump d5
+alias Mixer d4
 
-define MixerHash 2104106366
+define MsgPTarget 1
+define MsgTTarget 2
+define MsgStart 3
+
+define MixerHash -1
 define R 8.31446261815324
-define cp 28.2 # specific heat of CO2
+define InputVolume 1500 # 15 pipes * 100 L
+define FurnaceVolume 1000
 
-alias na r0
-alias nb r1
-alias nc r2
-alias Ra r3
-alias x r4
-alias y r5
-alias z r6
+alias pT r0
+alias tT r0
+alias nT r0
+alias nI r0
+alias nC r0
+alias nH r0
+alias nF r0
+alias x r0
+alias y r0
 
 main:
-
-calcMoles:
-l x PcMem Setting # x = Pc
-l y VcMem Setting # y = Vc
-mul nc x y # nc = Pc*Vc
-l y TcMem Setting # y = Tc
-div nc nc R # nc = Pc*Vc/R
-div nc nc y # nc = Pc*Vc/(R*Tc) : eq 1
-l x bAnalyzer Temperature # x = Tb
-sub y y x # y = Tc-Tb
-mul na nc y # na = nc*(Tc-Tb)
-l y aAnalyzer Temperature # y = Ta
-sub x y x # x = Ta-Tb
-div na na x # na = nc*(Tc-Tb)/(Ta-Tb) : eq 2
-sub nb nc na # nb = nc-na
-
-calcRatio:
-l x aAnalyzer TotalMoles # x = na0
-div x na x # x = ra = na/na0
-l y bAnalyzer TotalMoles # y = nb0
-div y nb y # y = rb = nb/nb0
-add y x y # y = ra+rb
-div Ra x y # Ra = ra/(ra+rb)
-mul Ra Ra 100
-
-sb MixerHash Setting Ra
-
+yield
+l x db Setting
+brne x MsgPTarget 4 # receive pressure target...
+jal waitReceive
+move pT x
+jal calculateMolesTarget
+brne x MsgTTarget 4 # receive temperature target...
+jal waitReceive
+move tT x
+jal calculateMolesTarget
+bne x MsgStart main # received start command
+calculateMolesInput:
+l x Furnace Pressure # x = pF
+l y Furnace Temperature # y = tF
+mul nF x FurnaceVolume # nF...
+div nF nF R
+div nF y # ... = (pF*vT)/(R*tF)
+sub nI nT nF # nI = nT-nF
+mul x tT nT # x = tI...
+mul y y nF
+sub x x y
+div x x nI # ... = (tT*nT-tF*nF)/nI
+l y CAnalyzer Temperature # y = tC
+sub nH x y # nH...
+l x HAnalyzer Temperature # x = tH
+mul nH nH nI
+sub x x y
+div nH nH x # ... = nI*(TI-TC)/(TH-TC)
+sub nC nI nH # nC = nI-nH
+checkMolesInput:
+min x nH nC # min(nH, nC)
+bgez x calculateMixerRatio # skip if positive
+removeExcess:
+jal dump # dump furnace gas
+add nF nF x
+div nF nF InputVolume
+s InputDumpPump On 1 # remove excess...
+yield
+l y IAnalyzer TotalMoles
+brgt y nF -2
+s InputDumpPump On 0
+jal fill # refill with excess removed
+j calculateMolesInput # recalculate
+calculateMixerRatio:
+l x HAnalyzer TotalMoles
+div x nH x # x = (rH : moles H needed to moles in pipe)
+l y CAnalyzer TotalMoles
+div y nC y # y = (rC : moles C needed to moles in pipe)
+add y x y # y = rH+rC
+div x x y # x = rH/(rH+rC) : mixer setting
+composeInput:
+s Mixer Setting x
+s Mixer On 1
+yield
+div y nI PipesInput # target moles in single pipe
+l x IAnalyzer TotalMoles # loop...
+yield
+brlt x y -2 # ...until moles achieved
+s Mixer On 0
+jal fill
 j main
+calculateMolesTarget: #nF
+mul nT pT FurnaceVolume # nT ...
+div nT nT R
+div nT nT tT # ... = (pT*vT)/(R*tT)
+j ra
+fill:
+s Furnace SettingInput 100
+yield
+l x IAnalyzer Pressure
+brgtz x -2
+s Furnace SettingInput 0
+j ra
+dump:
+s Furnace SettingOutput 100
+yield
+l x Furnace Pressure
+brgtz x -2
+s Furnace SettingOutput 0
+j ra
+waitReceive:
+s db Setting 0
+yield
+l x db Setting
+breqz x -2
+s db Setting 0
+j ra
+

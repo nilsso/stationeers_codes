@@ -1,0 +1,141 @@
+alias mixer d0
+alias hBufferAnalyzer d1
+alias hBufferPump d2
+alias cBufferAnalyzer d3
+alias cBufferPump d4
+
+define HBufferPMax 10000 # kPa
+define CBufferPMax 2000 # kPa
+
+alias x r0
+
+main:
+l x mixer On
+beqz x mixerOff
+mixerOn:
+s hBufferPump On 0
+s cBufferPump On 0
+j main
+mixerOff:
+l x hBufferAnalyzer Pressure
+slt x HBufferPMax
+s hBufferPump On x
+l x cBufferAnalyzer Pressure
+slt x CBufferPMax
+s cBufferPump On x
+j main
+
+# ---
+
+alias furnace
+alias hAnalyzer
+alias cAnalyzer
+alias mixer
+alias pTargetDial
+alias tTargetDial
+alias dumpInputPump
+
+define R 8.31446261815324
+define VF 1000
+
+define FillFurnace
+define EmptyFurnace
+define DumpInput
+
+alias V r0
+alias P r1
+alias T r2
+alias n r3
+alias TA r4
+alias nA r5
+alias TB r6
+alias nB r7
+alias TC r8
+alias nC r9
+alias p r10 # indexer
+alias q r11 # indexer
+alias x r12 # free
+alias y r13 # free
+
+main:
+# TODO: Remove PA, PB, PC
+
+move V VF
+l P pTargetDial Setting # P = PF
+l T tTargetDial Setting # P = TF
+jal calcn # n = nF
+jal storeC # TC = TF, nC = nF
+l P furnace Pressure # P = PF0
+l T furnace Temperature # T = TF0
+jal calcn # n = nF0
+jal storeB # TB = TF0, nB = nF0
+# B holding F0 values
+sub x nA nB # x = (nI = nF - nF0)
+jal calcTA # TA = (TI = (TF*nF-TF0*nF0)/nI)
+move nC x # nC = (x = nI)
+move TC TA # TC = (TA = TI)
+l P hAnalyzer Pressure # P = PH
+l T hAnalyzer Temperature # T = TH
+jal storeA # A = H
+l P cAnalyzer Pressure # P = PC
+l T cAnalyzer Temperature # T = TC
+jal storeB # B = C
+#     TA = TI, B = F0, C = F
+# make A =  H, B = C, C = I
+store 
+
+# n = (nH = nI*(TI-TC0)/(TH0-TC0))
+# n = (nC = nI - nH)
+
+j main
+
+calcn: # n = PV/RT
+mul n P V
+div n n R
+div n n T
+j ra
+calcTA: # TA = (TC*nC-TB*nB)/nA
+mul TA TC nC # TA = TC*nC
+mul x TB nB # x = TB*nB
+sub TA TA x # TA = TC*nC-TB*nB
+div TA TA nA # TA = (TC*nC-TB*nB)/nA
+j ra
+calcnA: # nA = nC*(TC-TB)/(TA-TB)
+sub nA TC TB # nA = TC-TB
+mul nA nC nA # nA = nC*(TC-TB)
+sub x TA TB # x = TA-TB
+div nA nA x # nA = nC*(TC-TB)/(TA-TB)
+j ra
+storeA:
+move p 4 # PA:r4
+j store
+unstoreA:
+move p 4 # PA:r4
+j unstore
+storeB:
+move p 6 # PB:r6
+j store
+unstoreB:
+move p 6 # PB:r6
+j unstore
+storeC:
+move p 8 # PC:r8
+j store
+unstoreC:
+move p 8 # PC:r8
+j unstore
+store:
+move q 1 # P:r1
+move rr13 rr14 # p:r13, q:r14
+add p 1 p
+add q 1 q
+brlt q 3 -3
+j ra
+unstore:
+move q 1 # P:r1
+move rr14 rr13 # p:r13, q:r14
+add p 1 p
+add q 1 q
+brlt q 3 -3
+j ra
+

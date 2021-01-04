@@ -11,18 +11,18 @@ def P(V, n, T):
 
 VF = 1000
 
-TF0 = 300
-nF0 = 30
+# TF0 = 300
+# nF0 = 30
+# PF = 10000
+# TF = 1000
+# TH0 = 2200
+# nH0 = 2000
+# TC0 = 200
+# nC0 = 2000
 
-PF = 10000
-TF = 1000
-
-TH0 = 2200
-nH0 = 2000
-TC0 = 200
-nC0 = 2000
-
-if not TF0:
+try:
+    TF0
+except:
     TF0 = random() * 1800
     nF0 = 200 + random() * 200
     PF = random() * 50000
@@ -72,6 +72,8 @@ C moles to add : nC = nI - nH = {nC:.2f} moles
 # if False:
 nHCmin = min(nH, nC)
 if nHCmin < 0:
+    # if nH < 0 and nC < 0:
+        # nHCmin = max(nH, nC)
     nF0 += nHCmin
     nI = nF - nF0
     TI = (TF*nF-TF0*nF0)/nI

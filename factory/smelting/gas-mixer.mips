@@ -62,13 +62,14 @@ checkMolesInput:
 min x nH nC # min(nH, nC)
 bgez x calculateMixerRatio # skip if positive
 removeExcess:
+s db Setting 4
 jal dump # dump furnace gas
 add nF nF x
 div nF nF InputVolume
 s InputDumpPump On 1 # remove excess...
 yield
-l y IAnalyzer TotalMoles
-brgt y nF -2
+l x IAnalyzer TotalMoles
+brgt x nF -2
 s InputDumpPump On 0
 jal fill # refill with excess removed
 j calculateMolesInput # recalculate
@@ -80,6 +81,7 @@ div y nC y # y = (rC : moles C to moles in pipe)
 add y x y # y = rH+rC
 div x x y # x = rH/(rH+rC) : mixer setting
 composeInput:
+s db Setting 5
 s Mixer Setting x
 s Mixer On 1
 yield
@@ -97,6 +99,7 @@ div nT nT R
 div nT nT tT # ... = (pT*vT)/(R*tT)
 j ra
 fill:
+s db Setting 6
 s Furnace SettingInput 100
 yield
 l x IAnalyzer Pressure
@@ -104,6 +107,7 @@ brgtz x -2
 s Furnace SettingInput 0
 j ra
 dump:
+s db Setting 7
 s Furnace SettingOutput 100
 yield
 l x Furnace Pressure

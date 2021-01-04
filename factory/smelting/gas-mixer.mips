@@ -24,19 +24,20 @@ alias nF r6
 alias x r7
 alias y r8
 
-move pT 10000
-move tT 1000
-jal calculateMolesTarget
-s db Setting 3
+move tT 0
+move pT 0
+s db Setting 0
+s Furnace SettingInput 0
+s Furnace SettingOutput 0
 
 main:
 yield
 l x db Setting
-brne x MsgPTarget 4 # receive pressure target...
+brne x MsgPTarget 4 # receive pressure target
 jal waitReceive
 move pT x
 jal calculateMolesTarget
-brne x MsgTTarget 4 # receive temperature target...
+brne x MsgTTarget 4 # receive temperature target
 jal waitReceive
 move tT x
 jal calculateMolesTarget
@@ -116,4 +117,3 @@ l x db Setting
 breqz x -2
 s db Setting 0
 j ra
-

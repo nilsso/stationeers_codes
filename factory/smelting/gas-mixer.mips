@@ -3,27 +3,31 @@ alias Furnace d0
 alias HAnalyzer d1
 alias CAnalyzer d2
 alias IAnalyzer d3
-alias InputDumpPump d5
-alias Mixer d4
+alias InputDumpPump d4
+alias Mixer d5
 
 define MsgPTarget 1
 define MsgTTarget 2
 define MsgStart 3
 
-define MixerHash -1
 define R 8.31446261815324
 define InputVolume 1500 # 15 pipes * 100 L
 define FurnaceVolume 1000
 
 alias pT r0
-alias tT r0
-alias nT r0
-alias nI r0
-alias nC r0
-alias nH r0
-alias nF r0
-alias x r0
-alias y r0
+alias tT r1
+alias nT r2
+alias nI r3
+alias nH r4
+alias nC r5
+alias nF r6
+alias x r7
+alias y r8
+
+move pT 10000
+move tT 1000
+jal calculateMolesTarget
+s db Setting 3
 
 main:
 yield
@@ -38,22 +42,20 @@ move tT x
 jal calculateMolesTarget
 bne x MsgStart main # received start command
 calculateMolesInput:
-l x Furnace Pressure # x = pF
-l y Furnace Temperature # y = tF
-mul nF x FurnaceVolume # nF...
-div nF nF R
-div nF y # ... = (pF*vT)/(R*tF)
-sub nI nT nF # nI = nT-nF
-mul x tT nT # x = tI...
-mul y y nF
-sub x x y
-div x x nI # ... = (tT*nT-tF*nF)/nI
-l y CAnalyzer Temperature # y = tC
-sub nH x y # nH...
-l x HAnalyzer Temperature # x = tH
+l x Furnace Temperature # x = tF
+l nF Furnace TotalMoles
+sub nI nT nF # nI = (nT-nF)
+mul y tT nT # y = tI...
+mul x x nF
+sub y y x
+div y y nI # ... = (tI = (tT*nT-tF*nF)/nI)
+calculateMolesHandC:
+l x CAnalyzer Temperature # x = tC
+sub nH y x # nH...
 mul nH nH nI
-sub x x y
-div nH nH x # ... = nI*(TI-TC)/(TH-TC)
+l y HAnalyzer Temperature # y = tH
+sub x y x
+div nH nH x # ... = nI*(tI-tC)/(tH-tC)
 sub nC nI nH # nC = nI-nH
 checkMolesInput:
 min x nH nC # min(nH, nC)
@@ -71,21 +73,22 @@ jal fill # refill with excess removed
 j calculateMolesInput # recalculate
 calculateMixerRatio:
 l x HAnalyzer TotalMoles
-div x nH x # x = (rH : moles H needed to moles in pipe)
+div x nH x # x = (rH : moles H to moles in pipe)
 l y CAnalyzer TotalMoles
-div y nC y # y = (rC : moles C needed to moles in pipe)
+div y nC y # y = (rC : moles C to moles in pipe)
 add y x y # y = rH+rC
 div x x y # x = rH/(rH+rC) : mixer setting
 composeInput:
 s Mixer Setting x
 s Mixer On 1
 yield
-div y nI PipesInput # target moles in single pipe
+div y nI InputVolume # target moles in single pipe
 l x IAnalyzer TotalMoles # loop...
 yield
 brlt x y -2 # ...until moles achieved
 s Mixer On 0
 jal fill
+s db Setting 0
 j main
 calculateMolesTarget: #nF
 mul nT pT FurnaceVolume # nT ...

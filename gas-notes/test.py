@@ -10,45 +10,27 @@ def P(V, n, T):
     return n*R*T/V
 
 VF = 1000
-VH = 5 * 100
-VC = 5 * 100
 
-TF0 = 284.69
-PF0 = 3799.38
-nF0 = 1605.11
+TF0 = 300
+nF0 = 30
 
-TF = 1728.95
-PF = 1708.81
+PF = 10000
+TF = 1000
 
-TH0 = 2356.82
-nH0 = 1300.15
-TC0 = 250.54
-nC0 = 1300.15
+TH0 = 2200
+nH0 = 2000
+TC0 = 200
+nC0 = 2000
 
 if not TF0:
-    # furnace (initial) conditions:
-    # PF0 = 50000
-    PF0 = random() * 50000
-    # TF0 = 200
     TF0 = random() * 1800
-    nF0 = (PF0*VF)/(R*TF0)
-    # furnace target conditions:
-    # PF = 50000
+    nF0 = 200 + random() * 200
     PF = random() * 50000
-    # TF = 400
     TF = random() * 1800
-    # hot gas initial conditions:
-    # TH0 = 2500
     TH0 = 2500 - random() * 250
-    # nH0 = 500
     nH0 = 500 + random() * 2000
-    # PH0 = P(VH0, nH0, TH0)
-    # cold gas initial conditions:
-    # TC0 = 200
     TC0 = 200 + random() * 100
-    # nC0 = 500
     nC0 = 500 + random() * 2000
-    # PC0 = P(VC, vC, TC)
 
 nF0_ = nF0
 
@@ -59,7 +41,7 @@ PF (target pressure)    : PF = {PF:.2f} kPa
 H initial conditions : TH0 = {TH0:.2f} K, nH0 = {nH0:.2f} moles
 C initial conditions : TC0 = {TC0:.2f} K, nC0 = {nC0:.2f} moles
 
-Furnace initial conditions : TF0 = {TF0:.2f} K, PF0 = {PF0:.2f} kPa, nF0 = {nF0:.2f} moles
+Furnace initial conditions : TF0 = {TF0:.2f} K, PF0 = {P(VF, nF0, TF0):.2f} kPa, nF0 = {nF0:.2f} moles
 
 ---
 SIMULATION''')

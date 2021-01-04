@@ -1,0 +1,45 @@
+alias MixerIC d0
+alias PTargetDial d1
+alias TTargetDial d2
+alias StartButton d3
+
+define MsgPTarget 1
+define MsgTTarget 2
+define MsgStart 3
+
+alias pTarget r0
+alias tTarget r1
+alias start r2
+alias x r3
+alias y r4
+
+main:
+jal checkMixerInput
+j main
+
+checkMixerInput:
+l x MixerIC Setting
+bnez x ra # skip if mixer busy
+l x PTargetDial Setting # pTarget
+breq x pTarget 3
+move y MsgPTarget
+j waitSend
+l x TTargetDial Setting # tTarget
+breq x tTarget 3
+move y MsgTTarget
+j waitSend
+l x start Setting # start
+breq x start 5
+move start x
+breqz start 3 # skip if changed to 0
+move y MsgStart
+s MixerIC Setting y
+j ra
+
+waitSend:
+s MixerIC Setting y
+yield
+l y MixerIC Setting
+brnez x -2 # wait for mixer IC to be ready to accept
+s MixerIC Setting x
+j ra

@@ -23,73 +23,77 @@ VF = 1000
 try:
     TF0
 except:
-    TF0 = random() * 1800
+    TF0 = 300 + random() * 1500
     nF0 = 200 + random() * 200
     PF = random() * 50000
-    TF = random() * 1800
+    TF = 300 + random() * 1500
     TH0 = 2500 - random() * 250
-    nH0 = 500 + random() * 2000
+    nH0 = 100 + random() * 100
     TC0 = 200 + random() * 100
-    nC0 = 500 + random() * 2000
+    nC0 = 100 + random() * 100
 
 nF0_ = nF0
 
 print(f'''\
-TF (target temperature) : TF = {TF:.2f} K
-PF (target pressure)    : PF = {PF:.2f} kPa
+TH0 (H initial temp)  = {TH0:.2f} K
+nH0 (H initial moles) = {nH0:.2f} moles
+TC0 (C initial temp)  = {TC0:.2f} K
+nC0 (C initial moles) = {nC0:.2f} moles
 
-H initial conditions : TH0 = {TH0:.2f} K, nH0 = {nH0:.2f} moles
-C initial conditions : TC0 = {TC0:.2f} K, nC0 = {nC0:.2f} moles
+TF0 (F initial temp)     = {TF0:.2f} K
+PF0 (F initial pressure) = {P(VF, nF0, TF0):.2f} kPa
+nF0 (F initial moles)    = {nF0:.2f} moles
 
-Furnace initial conditions : TF0 = {TF0:.2f} K, PF0 = {P(VF, nF0, TF0):.2f} kPa, nF0 = {nF0:.2f} moles
+TF (target temperature) = {TF:.2f} K
+PF (target pressure)    = {PF:.2f} kPa
 
 ---
 SIMULATION''')
 
 # calculate moles to add/remove, and temperature to add
-nF = (PF*VF)/(R*TF)
-nI = nF - nF0
-TI = (TF*nF-TF0*nF0)/nI
-print(f'''
-Target moles      : nF = {nF:.2f}
-Initial moles     : nF0 = {nF0:.2f}
-Moles to add      : nI = nF - nF0 = {nI:.2f}
-Input temperature : TI = {TI:.2f}
-''')
 
+global nF
+global nI
+global TI
+global nH
+global nC
 
-# compose input mixture
-nH = nI*(TI-TC0)/(TH0-TC0)
-# nH = min(100, max(0, nI*(TI-TC0)/(TH0-TC0)))
-nC = nI - nH
-
-print(f'''\
-(Initial nH/nC calculation)
-H moles to add : nH = {nH:.2f} moles
-C moles to add : nC = nI - nH = {nC:.2f} moles
-''')
-
-# if False:
-nHCmin = min(nH, nC)
-if nHCmin < 0:
-    # if nH < 0 and nC < 0:
-        # nHCmin = max(nH, nC)
-    nF0 += nHCmin
+def calcMolesCandH():
+    global nF
+    global nI
+    global TI
+    global nH
+    global nC
+    nF = (PF*VF)/(R*TF)
     nI = nF - nF0
     TI = (TF*nF-TF0*nF0)/nI
-    nH = max(0, nI*(TI-TC0)/(TH0-TC0))
-    nC = max(0, nI - nH)
+    print(f'''
+    Target moles      : nF = {nF:.2f}
+    Initial moles     : nF0 = {nF0:.2f}
+    Moles to add      : nI = {nI:.2f}
+    Input temperature : TI = {TI:.2f}
+    ''')
+    # compose input mixture
+    nH = nI*(TI-TC0)/(TH0-TC0)
+    # nH = min(100, max(0, nI*(TI-TC0)/(TH0-TC0)))
+    nC = nI - nH
+    # nC = nI*(TI-TH0)/(TC0-TH0)
     print(f'''\
-(Dumped {-nHCmin:.2f} moles from furnace, then recalculated)
-nF0 = {nF0:.2f}
-nI = {nI:.2f}
-TI = {TI:.2f}
-nH = {nH:.2f}
-nC = {nC:.2f}
-''')
+    H moles to add : nH = {nH:.2f} moles
+    C moles to add : nC = {nC:.2f} moles
+    ''')
+
+calcMolesCandH()
+while min(nH, nC) < 0:
+    m = min(nH, nC)
+    print(f'(Dumped {-m:.2f} moles from furnace, then recalculated)')
+    nF0 -= m
+    calcMolesCandH()
 
 nH = max(0, nH)
 nC = max(0, nC)
+
+print(nH, nC)
 
 rH = nH/nH0
 rC = nC/nC0

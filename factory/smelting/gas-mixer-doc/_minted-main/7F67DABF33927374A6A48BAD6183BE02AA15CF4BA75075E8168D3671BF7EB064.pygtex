@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        emptyFurnace:
+        yield
+        s Furnace SettingOutput 100
+        l x Furnace TotalMoles
+        brgtz \PYGZhy{}3
+        s Furnace SettingOutput 0
+        j ra
+\end{Verbatim}

@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        sub nH tI tC
+        mul nH nI nH
+        div nH nH dt
+        sub nC nI nH
+        j ra
+\end{Verbatim}

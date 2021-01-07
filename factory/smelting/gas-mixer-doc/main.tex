@@ -1,0 +1,245 @@
+% arara: lualatex: {shell: 1}
+\documentclass{article}
+\usepackage{geometry}[margin=1in]
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{minted}
+\usepackage{multicol}
+\usepackage{parcolumns}
+\usepackage{mathpazo}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xfrac}
+
+\newcommand{\tightmathT}{%
+    \setlength{\abovedisplayskip}{0pt}
+    \setlength{\abovedisplayshortskip}{0pt}
+}
+\newcommand{\tightmathB}{%
+    \setlength{\belowdisplayskip}{0pt}
+    \setlength{\belowdisplayshortskip}{0pt}
+}
+\newcommand{\tightmath}{%
+    \tightmathT%
+    \tightmathB%
+}
+
+\DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
+
+\begin{document}
+
+\section{Ideal gas mixer}
+
+\subsection{Utility functions}
+
+\begin{multicols}{2}
+    \noindent
+    For emptying the input pipe $I$ into the furnace
+    \columnbreak
+    \begin{minted}{text}
+        fillFurnace:
+        yield
+        s Furnace SettingInput 100
+        l x IAnalyzer TotalMoles
+        brgtz -3
+        s Furnace SettingInput 0
+        j ra
+    \end{minted}
+\end{multicols}
+
+\begin{multicols}{2}
+    \noindent
+    And for emptying the furnace into the filtration system, which filters all
+    $\CDiox$ back into the input pipe.
+    \columnbreak
+    \begin{minted}{text}
+        emptyFurnace:
+        yield
+        s Furnace SettingOutput 100
+        l x Furnace TotalMoles
+        brgtz -3
+        s Furnace SettingOutput 0
+        j ra
+    \end{minted}
+\end{multicols}
+
+\subsection{Mixing algorithm}
+
+\begin{multicols}{2}
+    \raggedcolumns
+    \noindent
+    Let $n_R=0$ be the moles to remove, and calculate constant terms.
+    \tightmathB%
+    \begin{flalign*}
+        e_T &= t_T n_T & \\
+        n_{T-F} &= n_T-n_F & \\
+        t_{H-C} &= t_H-t_C &
+    \end{flalign*}
+    \columnbreak
+
+    \begin{minted}{text}
+        move nR 0
+        mul eT tT nT
+        sub dn nT nF
+        sub dt tH tC
+    \end{minted}
+\end{multicols}
+
+\subsection{Calculate input moles $n_I=n_H+n_C$ given $n_R$}\label{alg:input}
+
+\begin{multicols}{2}
+    \raggedcolumns
+    \noindent
+    Calculate total moles input
+    \tightmathB
+    \begin{flalign*}
+        n_I = n_{T-F}+n_R &&
+    \end{flalign*}
+    \columnbreak
+
+    \begin{minted}{text}
+        calculateInputMoles:
+        add nI dn nR
+    \end{minted}
+\end{multicols}
+\begin{multicols}{2}
+    \raggedcolumns
+    \noindent
+    Calculate temperature input:
+    \tightmathB
+    \begin{flalign*}
+        t_I = \frac{e_T-t_F(n_F-n_R)}{n_I} &&
+    \end{flalign*}
+    \columnbreak
+
+    \begin{minted}{text}
+        sub x nF nR
+        mul x tF x
+        sub tI eT x
+        div tI tI nI
+    \end{minted}
+\end{multicols}
+\begin{multicols}{2}
+    \raggedcolumns
+    \noindent
+    Calculate moles from hot/cold source:
+    \tightmathB
+    \begin{flalign*}
+        n_H = \frac{n_I(t_I-t_C)}{t_{H-C}},\quad
+        n_C = n_I-n_H &&
+    \end{flalign*}
+    \columnbreak
+
+    \begin{minted}{text}
+        sub nH tI tC
+        mul nH nI nH
+        div nH nH dt
+        sub nC nI nH
+        j ra
+    \end{minted}
+\end{multicols}
+
+\subsection{Searching for $n_R$}
+
+\begin{multicols}{2}
+    \noindent
+    For $n_R$ to be valid, $n_H$ and $n_C$ must both be positive.
+    \columnbreak
+    \begin{minted}{text}
+        checkInputMoles:
+        min x nH nC
+        sgtz x x # x = nH > 0 and nC > 0
+        j ra
+    \end{minted}
+\end{multicols}
+\begin{multicols}{2}
+    \noindent
+    For $n_R=0$, if this is the case we are done.
+    \columnbreak
+    \begin{minted}{text}
+        move nR 0
+        jal calculateInputMoles
+        jal checkInputMoles
+        beq x 1 compose # nR=0, nH>0, nC>0: skip
+    \end{minted}
+\end{multicols}
+\noindent
+Else, we begin a binary search of the domain $[0,n_F]$
+for a satisfactory value of $n_R$, each time recalculating and rechecking the
+input moles via \ref{alg:input}.
+Beginning with $n_R=\sfrac{n_F}{2}$, we bisect $i$ times.
+\begin{minted}{text}
+    define BisectionIterations 20
+    # ...
+    move i BisectionIterations
+    div nR nF 2
+    div step nF 4
+    jal calculateInputMoles
+    jal checkInputMoles
+    select x x 1 -1
+    mul x x step
+    add nR nR x # nR += (nH>0 && nC>0) ? step : -step
+    div step step 2
+    sub i i 1
+    brgtz i -7
+\end{minted}
+
+\subsection{Removing $n_R$ and composing $I$}\label{alg:composing}
+
+\begin{multicols}{2}
+    \raggedcolumns
+    \noindent
+    Having found satisfactory $n_R$, $n_H$ and $n_C$, we first remove $n_R$
+    moles from the furnace (or remove none when $n_R$ is zero).
+    The furnace, containing only $\CDiox$, is emptied into the input pipe $I$.
+    Moles are removed, via a volume pump, until the total moles in the pipe
+    $n_I$ is less-than or equal to the initial number of moles $n_F$ minus the
+    number of moles to remove $n_R$. Then this potentially reduced amount is
+    reinserted into the furnace.
+    \columnbreak
+    \begin{minted}{text}
+        jal emptyFurnace
+        sub nF nF nR
+        yield
+        s InputDumpPump On 1
+        l x IAnalyzer TotalMoles
+        brgt x nF -3
+        s InputDumpPump On 0
+        jal fillFurnace
+    \end{minted}
+\end{multicols}
+
+%\begin{multicols}{2}
+\begin{parcolumns}{2}
+    \colchunk[1]{%
+        We then compose the $I$ mixture by first adding $H$ moles via a volume pump
+        while the moles in $I$ is less-than to $n_H$, then doing the
+        same for $C$ until moles in $I$ is less-than to $n_I$.
+    }\colchunk[2]{%
+        \begin{minted}{text}
+            alias HPump d0
+            alias CPump d1
+            alias HAnalyzer d2
+            alias CAnalyzer d3
+
+            alias nH r0
+            alias hC r1
+            alias i r2
+
+            move i 0
+
+            fillUntil:
+            yield
+            s dr2 On 1
+            add i i 2
+            l x dr3 TotalMoles
+            sub i i 2
+            brlt x rr2 - 3
+            s dr0 On 0
+            add i i 1
+        \end{minted}
+    }
+\end{parcolumns}
+
+\end{document}

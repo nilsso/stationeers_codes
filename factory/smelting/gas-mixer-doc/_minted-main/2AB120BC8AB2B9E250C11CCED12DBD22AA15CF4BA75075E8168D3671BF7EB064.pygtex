@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        move nR 0
+        jal calculateInputMoles
+        jal checkInputMoles
+        beq x 1 compose \PYGZsh{} nR=0, nH\PYGZgt{}0, nC\PYGZgt{}0: skip
+\end{Verbatim}

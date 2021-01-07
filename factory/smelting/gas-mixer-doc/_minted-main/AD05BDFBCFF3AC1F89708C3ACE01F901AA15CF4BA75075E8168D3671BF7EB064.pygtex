@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        checkInputMoles:
+        min x nH nC
+        sgtz x x \PYGZsh{} x = nH \PYGZgt{} 0 and nC \PYGZgt{} 0
+        j ra
+\end{Verbatim}

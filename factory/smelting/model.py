@@ -4,6 +4,7 @@ import matplotlib.patches as mpatches
 import matplotlib.colors as colors
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import Slider
+from itertools import product, combinations
 
 R = 8.314
 vF = 1000
@@ -17,18 +18,16 @@ nC = 100000
 
 pMin = 100
 pMax = 50000
-tMin = 200
-tMax = 2300
 
-tT0 = 300
-pT0 = 50000
-# tT0 = 1889.00
-# pT0 = 17948.00
+# tT0 = 1500
+# pT0 = 4000
+tT0 = 2100
+pT0 = 40000
 
-tF0 = 200
-pF0 = 40000
-# tF0 = 2108.00
-# pF0 = 45300.00
+# tF0 = 800
+# pF0 = 3000
+tF0 = 2050
+pF0 = 38000
 
 # fig, ax = plt.subplots()
 fig = plt.figure()
@@ -43,56 +42,46 @@ pTax = plt.axes([0.1, 0.05+0.03*1, 0.8, 0.02])
 tTax = plt.axes([0.1, 0.05+0.03*0, 0.8, 0.02])
 
 pFslider = Slider(pFax, '$p_F$', pMin, pMax, valinit=pF0)
-tFslider = Slider(tFax, '$t_F$', tMin, tMax, valinit=tF0)
+tFslider = Slider(tFax, '$t_F$', tC, tH, valinit=tF0)
 pTslider = Slider(pTax, '$p_T$', pMin, pMax, valinit=pT0)
-tTslider = Slider(tTax, '$t_T$', tMin, tMax, valinit=tT0)
-
-n = 30 # mesh points
-zero = np.zeros([n])
+tTslider = Slider(tTax, '$t_T$', tC, tH, valinit=tT0)
 
 def update(_=None):
-    # tT, pT, tF, pF = tT0, pT0, tF0, pF0
+    ax.clear()
     tT, pT, tF, pF = tTslider.val, pTslider.val, tFslider.val, pFslider.val
     nF = P(pF, vF, tF)
-    nT = P(pT, vF, tT)
 
-    nR = np.linspace(0, nF, n)
+    nR = np.linspace(0, nF, 500)
     nI = nT-nF+nR
     tI = (tT*nT-tF*(nF-nR))/nI
-    # tI = np.clip((tT*nT-tF*(nF-nR))/nI, tC, tH)
+    nR[np.where(
+        np.logical_or(
+            np.logical_or(tI < tC, tI > tH),
+            nI < 0
+        )
+    )] = np.nan
+    # tI = np.clip(tI, tC, tH)
+    ax.plot3D(nR, tI, nI, c='red')
 
-    mask = np.full([n], False)
-    mask = np.logical_or(mask, tI < tC)
-    mask = np.logical_or(mask, tI > tH)
-    mask = np.logical_or(mask, nI < 0)
+    n = 50
+    nR = np.linspace(0, nF, n) # nR in [0, nF]
+    tI = np.linspace(tC, tH, n) # tI in [tC, tH]
+    nR, tI = np.meshgrid(nR, tI)
+    nI = (tT*nT-tF*(nF-nR))/tI
+    nR[np.where(
+        np.logical_or(
+            np.logical_or(tI < tC, tI > tH),
+            nI < 0
+        )
+    )] = np.nan
+    ax.plot_surface(nR, tI, nI, alpha=0.5)
 
-    nR = np.ma.masked_where(mask, nR)
-    nI = np.ma.masked_where(mask, nI)
-    tI = np.ma.masked_where(mask, tI)
+    ax.set_xlabel('$n_R$')
+    ax.set_ylabel('$t_I$')
+    ax.set_zlabel('$n_I$')
 
-    # tI_ = min(tH, max(tC, (tF*nF-tT*nT)/(nT+nF)))
-    tI_ = (tF*nF-tT*nT)/(nT+nF)
-    nR_ = nF-(tT*nT+tI_*nT)/(tF-tI_)
-    print(f'{tI_:.2f}, {nR_:.2f}')
-
-    ax1.clear()
-    ax1.plot(nR, nI)
-    # ax1.set_xlim(0, nF)
-    # ax1.set_ylim(0, np.ma.log10(np.max(nI)))
-    ax1.set_xlabel('Moles removed $n_R$')
-    ax1.set_ylabel('Moles added $n_I$')
-    # ax1.set_title(f'$n_F={nF:n}$')
-
-    ax2.clear()
-    ax2.plot(nR, tI)
-    # ax2.set_xlim(0, nF)
-    # ax2.set_ylim(np.log10(tC), np.log10(tH))
-    ax2.set_xlabel('Moles removed $n_R$')
-    ax2.set_ylabel('Temperature of moles added $t_I$')
-
-    # ax3.clear()
-    # ax3.plot(nR, (tF*(nF-nR)+tI*nI)/(nF-nR+nI))
-    # ax3.set_xlim(0, nF)
+    ax.set_xlim3d(0, nF)
+    ax.set_zlim3d(0, np.max(nI))
 
 for s in [tTslider, pTslider, tFslider, pFslider]:
     s.on_changed(update)

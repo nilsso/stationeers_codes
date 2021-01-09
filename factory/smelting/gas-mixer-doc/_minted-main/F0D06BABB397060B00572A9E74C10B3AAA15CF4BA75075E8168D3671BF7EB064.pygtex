@@ -1,6 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-        sub x nF nR
-        mul x tF x
-        sub tI eT x
-        div tI tI nI
-\end{Verbatim}

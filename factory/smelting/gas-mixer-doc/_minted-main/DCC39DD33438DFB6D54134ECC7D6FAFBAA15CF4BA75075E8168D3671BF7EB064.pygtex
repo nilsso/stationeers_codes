@@ -1,9 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-        fillFurnace:
-        yield
-        s Furnace SettingInput 100
-        l x IAnalyzer TotalMoles
-        brgtz \PYGZhy{}3
-        s Furnace SettingInput 0
-        j ra
-\end{Verbatim}

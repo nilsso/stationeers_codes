@@ -9,7 +9,7 @@ from itertools import product, combinations
 R = 8.314
 vF = 1000
 
-P = lambda p, v, t: (p*v)/(t*R)
+moles = lambda p, v, t: (p*v)/(t*R)
 
 tH = 2300.0
 nH = 100000
@@ -29,11 +29,8 @@ pT0 = 40000
 tF0 = 2050
 pF0 = 38000
 
-# fig, ax = plt.subplots()
 fig = plt.figure()
-ax1 = fig.add_subplot(121)
-ax2 = fig.add_subplot(122)
-# ax3 = fig.add_subplot(313)
+ax = fig.add_subplot(111, projection='3d')
 plt.subplots_adjust(bottom=0.25)
 
 pFax = plt.axes([0.1, 0.05+0.03*3, 0.8, 0.02])
@@ -49,18 +46,25 @@ tTslider = Slider(tTax, '$t_T$', tC, tH, valinit=tT0)
 def update(_=None):
     ax.clear()
     tT, pT, tF, pF = tTslider.val, pTslider.val, tFslider.val, pFslider.val
-    nF = P(pF, vF, tF)
+    nF = moles(pF, vF, tF)
+    nT = moles(pT, vF, tT)
 
+    tI_given_nR = lambda nR: (tT*nT-tF*(nF-nR))/(nT-nF+nR)
+    nR_given_tI = lambda tI: nF+nT*(tI-tT)/(tF-tI)
+
+    # Embedded surface line
     nR = np.linspace(0, nF, 500)
     nI = nT-nF+nR
     tI = (tT*nT-tF*(nF-nR))/nI
     nR[np.where(
         np.logical_or(
-            np.logical_or(tI < tC, tI > tH),
-            nI < 0
+            np.logical_or(nR < 0, nR > nF),
+            np.logical_or(
+                np.logical_or(tI < tC, tI > tH),
+                nI < 0
+            )
         )
     )] = np.nan
-    # tI = np.clip(tI, tC, tH)
     ax.plot3D(nR, tI, nI, c='red')
 
     n = 50
@@ -70,11 +74,39 @@ def update(_=None):
     nI = (tT*nT-tF*(nF-nR))/tI
     nR[np.where(
         np.logical_or(
-            np.logical_or(tI < tC, tI > tH),
-            nI < 0
+            np.logical_or(nR < 0, nR > nF),
+            np.logical_or(
+                np.logical_or(tI < tC, tI > tH),
+                nI < 0
+            )
         )
     )] = np.nan
     ax.plot_surface(nR, tI, nI, alpha=0.5)
+
+    tI_ = tI_given_nR(0)
+    if tC <= tI_ and tI_ <= tH:
+        ax.scatter([0], [nT-nF], [tI_], color='C2')
+        print(0, nT-nF, tI_)
+
+    nR_ = nR_given_tI(tC)
+    if 0 <= nR_ and nR_ <= nF:
+        ax.scatter(
+                # np.clip([nR_], 0, nF),
+                [nR_],
+                [nT-nF+nR_],
+                # np.clip([tC], tC, tH),
+                [tC],
+                color='C0')
+
+    nR_ = nR_given_tI(tH)
+    if 0 <= nR_ and nR_ <= nF:
+        ax.scatter(
+                # np.clip([nR_], 0, nF),
+                [nR_],
+                [nT-nF+nR_],
+                # np.clip([tH], tC, tH),
+                [tH],
+                color='C3')
 
     ax.set_xlabel('$n_R$')
     ax.set_ylabel('$t_I$')

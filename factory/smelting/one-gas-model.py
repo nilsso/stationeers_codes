@@ -50,6 +50,8 @@ def update(_=None):
     nF = moles(pF, vF, tF)
     nT = moles(pT, vF, tT)
 
+    print(nF, nT)
+
     tI_given_nR = lambda nR: (tT*nT-tF*(nF-nR))/(nT-nF+nR)
     nR_given_tI = lambda tI: nF+nT*(tI-tT)/(tF-tI)
 

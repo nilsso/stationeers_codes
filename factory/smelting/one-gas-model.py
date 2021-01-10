@@ -31,6 +31,7 @@ pF0 = 6000
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
+ax.view_init(elev=22, azim=135)
 plt.subplots_adjust(bottom=0.25)
 
 pFax = plt.axes([0.1, 0.05+0.03*3, 0.8, 0.02])
@@ -56,15 +57,16 @@ def update(_=None):
     nR = np.linspace(0, nF, 500)
     nI = nT-nF+nR
     tI = (tT*nT-tF*(nF-nR))/nI
-    nR[np.where(
+    mask = np.logical_or(
+        np.logical_or(nR < 0, nR > nF),
         np.logical_or(
-            np.logical_or(nR < 0, nR > nF),
-            np.logical_or(
-                np.logical_or(tI < tC, tI > tH),
-                nI < 0
-            )
+            np.logical_or(tI < tC, tI > tH),
+            nI < 0
         )
-    )] = np.nan
+    )
+    nR[np.where(mask)] = np.nan
+    tI[np.where(mask)] = np.nan
+    nI[np.where(mask)] = np.nan
     ax.plot3D(nR, tI, nI, c='red')
 
     # Surface
@@ -73,25 +75,66 @@ def update(_=None):
     tI = np.linspace(tC, tH, n) # tI in [tC, tH]
     nR, tI = np.meshgrid(nR, tI)
     nI = (tT*nT-tF*(nF-nR))/tI
-    nR[np.where(
+    mask = np.logical_or(
+        np.logical_or(nR < 0, nR > nF),
         np.logical_or(
-            np.logical_or(nR < 0, nR > nF),
-            np.logical_or(
-                np.logical_or(tI < tC, tI > tH),
-                nI < 0
-            )
+            np.logical_or(tI < tC, tI > tH),
+            nI < 0
         )
-    )] = np.nan
+    )
+    nR[np.where(mask)] = np.nan
     ax.plot_surface(nR, tI, nI, alpha=0.5)
+    ax.set_xlim3d(0, nF)
+    ax.set_zlim3d(-10, np.max(nI))
 
-    # tI_ = tI_given_nR(0)
+    tI[np.where(mask)] = np.nan
+    nI[np.where(mask)] = np.nan
+    # print(np.nanmin(nI))
+
+    nR_ = 0
+    tI_ = (tT*nT-tF*(nF-nR_))/(nT-nF+nR_)
     nI_ = nT-nF
-    tI_ = (tT*nT-tF*nF)/nI_
     nH_ = nI_*(tI_-tC)/(tH-tC)
     nC_ = nI_-nH_
-    if nH_ >= 0 and nC_ >= 0:
-        ax.scatter([0], [tI_], [nI_], color='C2') # green
-    print(nH_, nC_);
+    tT_ = (tF*(nF-nR_)+tC*nC_+tH*nH_)/(nF-nR_+nC_+nH_)
+    if nR_ >= 0 and nH_ >= 0 and nC_ >= 0:
+        ax.scatter([nR_], [tI_], [nI_], color='C2') # green
+    print(f'nR:{nR_:.1f} tI:{tI_:.1f} nH:{nH_:.1f} nC:{nC_:.1f} tT:{tT_:.1f}')
+
+    tI_ = tC
+    nR_ = nF-(nT*(tT-tC))/(tF-tC)
+    nI_ = nT-nF+nR_
+    nH_ = nI_*(tI_-tC)/(tH-tC)
+    nC_ = nI_-nH_
+    tT_ = (tF*(nF-nR_)+tC*nC_+tH*nH_)/(nF-nR_+nC_+nH_)
+    if nR_ >= 0 and nH_ >= 0 and nC_ >= 0:
+        ax.scatter([nR_], [tI_], [nI_], color='C0') # blue
+    # print(f'nR:{nR_:.1f} tI:{tI_:.1f} nH:{nH_:.1f} nC:{nC_:.1f} tT:{tT_:.1f}')
+
+    tI_ = tH
+    nR_ = nF-(nT*(tT-tH))/(tF-tH)
+    nI_ = nT-nF+nR_
+    nH_ = nI_*(tI_-tC)/(tH-tC)
+    nC_ = nI_-nH_
+    tT_ = (tF*(nF-nR_)+tC*nC_+tH*nH_)/(nF-nR_+nC_+nH_)
+    if nR_ >= 0 and nH_ >= 0 and nC_ >= 0:
+        ax.scatter([nR_], [tI_], [nI_], color='C3') # red
+    # print(f'nR:{nR_:.1f} tI:{tI_:.1f} nH:{nH_:.1f} nC:{nC_:.1f} tT:{tT_:.1f}')
+
+    # x = [0.0, np.nanmax(nF)]
+    # y = [tC, tH]
+    # x, y = np.meshgrid(x, y)
+    # z = np.zeros(x.shape)
+    # ax.plot_surface(x, y, z, color='C2')
+
+    # tI_ = tI_given_nR(0)
+    # nI_ = nT-nF
+    # tI_ = (tT*nT-tF*nF)/nI_
+    # nH_ = nI_*(tI_-tC)/(tH-tC)
+    # nC_ = nI_-nH_
+    # if nH_ >= 0 and nC_ >= 0:
+    #     ax.scatter([0], [tI_], [nI_], color='C2') # green
+    # print(nH_, nC_);
 
     #tI_ = tC
     #nR_ = nF-(nT*(tT-tC))/(tF-tC)
@@ -118,9 +161,6 @@ def update(_=None):
     ax.set_xlabel('$n_R$')
     ax.set_ylabel('$t_I$')
     ax.set_zlabel('$n_I$')
-
-    ax.set_xlim3d(0, nF)
-    ax.set_zlim3d(0, np.max(nI))
 
 for s in [tTslider, pTslider, tFslider, pFslider]:
     s.on_changed(update)

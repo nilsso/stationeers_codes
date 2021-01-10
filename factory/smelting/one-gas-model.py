@@ -21,13 +21,13 @@ pMax = 50000
 
 # tT0 = 1500
 # pT0 = 4000
-tT0 = 2100
-pT0 = 40000
+tT0 = 700
+pT0 = 8000
 
 # tF0 = 800
 # pF0 = 3000
-tF0 = 2050
-pF0 = 38000
+tF0 = 600
+pF0 = 6000
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -67,6 +67,7 @@ def update(_=None):
     )] = np.nan
     ax.plot3D(nR, tI, nI, c='red')
 
+    # Surface
     n = 50
     nR = np.linspace(0, nF, n) # nR in [0, nF]
     tI = np.linspace(tC, tH, n) # tI in [tC, tH]
@@ -83,30 +84,36 @@ def update(_=None):
     )] = np.nan
     ax.plot_surface(nR, tI, nI, alpha=0.5)
 
-    tI_ = tI_given_nR(0)
-    if tC <= tI_ and tI_ <= tH:
-        ax.scatter([0], [nT-nF], [tI_], color='C2')
-        print(0, nT-nF, tI_)
+    # tI_ = tI_given_nR(0)
+    nI_ = nT-nF
+    tI_ = (tT*nT-tF*nF)/nI_
+    nH_ = nI_*(tI_-tC)/(tH-tC)
+    nC_ = nI_-nH_
+    if nH_ >= 0 and nC_ >= 0:
+        ax.scatter([0], [tI_], [nI_], color='C2') # green
+    print(nH_, nC_);
 
-    nR_ = nR_given_tI(tC)
-    if 0 <= nR_ and nR_ <= nF:
-        ax.scatter(
-                # np.clip([nR_], 0, nF),
-                [nR_],
-                [nT-nF+nR_],
-                # np.clip([tC], tC, tH),
-                [tC],
-                color='C0')
+    #tI_ = tC
+    #nR_ = nF-(nT*(tT-tC))/(tF-tC)
+    #nI_ = nT-nF+nR_
+    ##if 0 <= nR_ and nR_ <= nF:
+    #ax.scatter(
+    #        # np.clip([nR_], 0, nF),
+    #        [nR_],
+    #        [tI_],
+    #        # np.clip([tC], tC, tH),
+    #        [nI_],
+    #        color='C0') # blue
 
-    nR_ = nR_given_tI(tH)
-    if 0 <= nR_ and nR_ <= nF:
-        ax.scatter(
-                # np.clip([nR_], 0, nF),
-                [nR_],
-                [nT-nF+nR_],
-                # np.clip([tH], tC, tH),
-                [tH],
-                color='C3')
+    #nR_ = nR_given_tI(tH)
+    #if 0 <= nR_ and nR_ <= nF:
+    #    ax.scatter(
+    #            # np.clip([nR_], 0, nF),
+    #            [nR_],
+    #            [nT-nF+nR_],
+    #            # np.clip([tH], tC, tH),
+    #            [tH],
+    #            color='C3')
 
     ax.set_xlabel('$n_R$')
     ax.set_ylabel('$t_I$')

@@ -1,5 +1,5 @@
 % All gas model
-% global R;
+global R;
 R = 8.31446261815324;
 global c;
 global nF0;
@@ -68,7 +68,7 @@ function sT = calc_sT(gamma, alpha, beta)
     global rH;
     global nC0;
     global rC;
-    
+
     w = size(alpha, 1);
     h = size(alpha, 2);
     

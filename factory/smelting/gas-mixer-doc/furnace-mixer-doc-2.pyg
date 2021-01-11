@@ -1,7 +1,0 @@
-        emptyFurnace:
-        yield
-        s Furnace SettingOutput 100
-        l x Furnace TotalMoles
-        brgtz -3
-        s Furnace SettingOutput 0
-        j ra

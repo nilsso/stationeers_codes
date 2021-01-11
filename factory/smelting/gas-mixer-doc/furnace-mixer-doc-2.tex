@@ -1,30 +1,29 @@
 % arara: lualatex: {shell: 1}
 \documentclass{article}
 \usepackage{geometry}[margin=1in]
+\usepackage[T1]{fontenc}
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{subcaption}
 \usepackage{minted}
-\usepackage{multicol}
+%\usepackage{multicol}
 \usepackage{parcolumns}
 \usepackage{mathpazo}
 \usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{mathtools}
+%\usepackage{amssymb}
+%\usepackage{mathtools}
 \usepackage{xfrac}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
 \usepgflibrary{fpu}
 
-\newcommand\pgfmathparseFPU[1]{\begingroup%
-\pgfkeys{/pgf/fpu,/pgf/fpu/output format=fixed}%
-\pgfmathparse{#1}%
-\pgfmathsmuggle\pgfmathresult\endgroup}%
-
-%\newcommand\pgfmathsetmacroFPU[2]{%
-%\pgfmathparseFPU{#2}
-%\def{#1}{\pgfmathresult}
-%}
+\newcommand\pgfmathparseFPU[1]{
+    \begingroup%
+        \pgfkeys{/pgf/fpu,/pgf/fpu/output format=fixed}
+        \pgfmathparse{#1}
+        \pgfmathsmuggle\pgfmathresult
+    \endgroup
+}
 
 \newcommand{\tightmathT}{%
     \setlength{\abovedisplayskip}{0pt}
@@ -41,13 +40,26 @@
 
 \DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
 
-\def\R{8.314}
+\begin{document}
+
+\def\GasConstant{8.314}
 \def\vF{1000}
 \def\tC{230}
 \def\tH{2300}
 
+\newcommand{\setupparams}[4]{%
+    \pgfmathsetmacro{\pF}{#1}
+    \pgfmathsetmacro{\tF}{#2}
+    \pgfmathparseFPU{\pF/\tF*\vF/\GasConstant)}\pgfmathsetmacro{\nF}{\pgfmathresult}
+    \pgfmathsetmacro{\pT}{#3}
+    \pgfmathsetmacro{\tT}{#4}
+    \pgfmathparseFPU{\pT/\tT*\vF/\GasConstant)}\pgfmathsetmacro{\nT}{\pgfmathresult}
+    \pgfmathsetmacro{\rG}{0}
+    \pgfmathparseFPU{\nF-(\nT*(\tT-\tH))/(\tF-\tH)}\pgfmathsetmacro{\rR}{\pgfmathresult}
+    \pgfmathparseFPU{\nF-(\nT*(\tT-\tC))/(\tF-\tC)}\pgfmathsetmacro{\rB}{\pgfmathresult}
+}
 \newcommand{\surf}{%
-    \addplot3[
+    \addplot3[%
         surf,
         samples=15,
         samples y=15,
@@ -55,66 +67,48 @@
         domain=0:\nF,
         domain y=\tC:\tH,
         variable=\nR,
-    ] 
+    ]
     {(\tT*\nT-\tF*(\nF-\nR))/y};
 }
-\newcommand{\Surf}[4]{%
-    \pgfmathsetmacro{\pF}{#1}
-    \pgfmathsetmacro{\tF}{#2}
-    \pgfmathsetmacro{\pT}{#3}
-    \pgfmathsetmacro{\tT}{#4}
-    \begin{tikzpicture}[scale=0.5]
+\newcommand{\curve}{%
+    \addplot3[%
+        thick,
+        color=red,
+        samples=30,
+        samples y=0,
+        domain={max(\rG, max(\rR, \rB))}:\nF,
+        domain y=\tC:\tH,
+        variable=\nR,
+    ]
+    ({\nR},{(\tT*\nT-\tF*(\nF-\nR))/(\nT-\nF+\nR)},{\nT-\nF+\nR});
+}
+\newcommand{\Surf}[5][1.0]{%
+    \setupparams{#2}{#3}{#4}{#5}
+    \begin{tikzpicture}[scale=#1]
         \begin{axis}[
-                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$}, 
+                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
                 xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
                 view={-135}{45},
                 ymin=\tC, ymax=\tH,
                 zmin=0,
             ]
-            \surf{}
+            \surf%
+            \curve%
         \end{axis}
     \end{tikzpicture}
 }
-\newcommand{\Full}[4]{%
-    \pgfmathsetmacro{\pF}{#1}
-    \pgfmathsetmacro{\tF}{#2}
-    \pgfmathsetmacro{\pT}{#3}
-    \pgfmathsetmacro{\tT}{#4}
-    \pgfmathparseFPU{\pF/\R/\tF*\vF}\pgfmathsetmacro{\nF}{\pgfmathresult}
-    \pgfmathparseFPU{\pT/\R/\tT*\vF}\pgfmathsetmacro{\nT}{\pgfmathresult}
-    \pgfmathsetmacro{\rG}{0}
-    \pgfmathparseFPU{\nF-(\nT*(\tT-\tH))/(\tF-\tH)}\pgfmathsetmacro{\rR}{\pgfmathresult}
-    \pgfmathparseFPU{\nF-(\nT*(\tT-\tC))/(\tF-\tC)}\pgfmathsetmacro{\rB}{\pgfmathresult}
-
-    \begin{tikzpicture}[scale=0.5]
+\newcommand{\Full}[5][1.0]{%
+    \setupparams{#2}{#3}{#4}{#5}
+    \begin{tikzpicture}[scale=#1]
         \begin{axis}[
-                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$}, 
+                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
                 xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
                 view={-135}{45},
                 ymin=\tC, ymax=\tH,
                 zmin=0,
             ]
-            \addplot3[
-                surf,
-                samples=15,
-                samples y=15,
-                opacity=0.5,
-                domain=0:\nF,
-                domain y=\tC:\tH,
-                variable=\nR,
-            ] 
-            {(\tT*\nT-\tF*(\nF-\nR))/y};
-            \addplot3+[
-                no markers,
-                thick,
-                color=red,
-                samples=30,
-                samples y=0,
-                domain={max(\rG, max(\rR, \rB))}:\nF,
-                domain y=\tC:\tH,
-                variable=\nR,
-            ]
-            ({\nR},{(\tT*\nT-\tF*(\nF-\nR))/(\nT-\nF+\nR)},{\nT-\nF+\nR});
+            \surf%
+            \curve%
             \filldraw[green]
             (
                 {\rG},
@@ -137,42 +131,44 @@
     \end{tikzpicture}
 }
 
-\begin{document}
-
 \section{Ideal gas mixer}
 
 \subsection{Utility functions}
 
-\begin{multicols}{2}
-    \noindent
-    For emptying the input pipe $I$ into the furnace
-    \columnbreak
-    \begin{minted}{text}
-        fillFurnace:
-        yield
-        s Furnace SettingInput 100
-        l x IAnalyzer TotalMoles
-        brgtz -3
-        s Furnace SettingInput 0
-        j ra
-    \end{minted}
-\end{multicols}
+\begin{parcolumns}{2}
+    \colchunk[1]{%
+        \noindent
+        For emptying the input pipe $I$ into the furnace
+    }\colchunk[2]{%
+        \begin{minted}{text}
+            fillFurnace:
+            yield
+            s Furnace SettingInput 100
+            l x IAnalyzer TotalMoles
+            brgtz -3
+            s Furnace SettingInput 0
+            j ra
+        \end{minted}
+    }
+\end{parcolumns}
 
-\begin{multicols}{2}
-    \noindent
-    And for emptying the furnace into the filtration system, which filters all
-    $\CDiox$ back into the input pipe.
-    \columnbreak
-    \begin{minted}{text}
-        emptyFurnace:
-        yield
-        s Furnace SettingOutput 100
-        l x Furnace TotalMoles
-        brgtz -3
-        s Furnace SettingOutput 0
-        j ra
-    \end{minted}
-\end{multicols}
+\begin{parcolumns}{2}
+    \colchunk[1]{%
+    %\noindent
+        And for emptying the furnace into the filtration system, which filters all
+        $\CDiox$ back into the input pipe.
+    }\colchunk[2]{%
+        \begin{minted}{text}
+            emptyFurnace:
+            yield
+            s Furnace SettingOutput 100
+            l x Furnace TotalMoles
+            brgtz -3
+            s Furnace SettingOutput 0
+            j ra
+        \end{minted}
+    }
+\end{parcolumns}
 
 \subsection{Mixing algorithm}
 
@@ -187,25 +183,47 @@ an amount $n_I$ at a specific temperature $t_I$, where $I$ is composed from
 amounts $n_H$ and $n_C$ from the $H$ and $C$ sources.
 Several gas-law derived equations constrain this process:
 \begin{gather}
-    t_T n_T = t_F(n_F-n_R)+t_I n_I \label{eq:1} \\
-    t_I n_I = t_H n_H+t_C n_I \label{eq:2} \\
-    n_T = n_F-n_R+n_I \label{eq:3}
+    t_T n_T = t_F(n_F-n_R)+t_I n_I \label{eq:surface} \\
+    n_T = n_F-n_R+n_I \label{eq:constraint} \\
+    t_I n_I = t_H n_H+t_C n_I \label{eq:added}
 \end{gather}
 Where $n_R$, $t_I$ and $n_I=n_H+n_C$ are to be determined.
 Note the constraint for pressures and temperatures in this system
 for specific volumes or an arbitrary volume $M$:
 \begin{gather*}
-    0\le n_R\le n_F \\
     t_C\le t_M\le t_H,\quad
     0\le n_M,\quad
-    0\le p_M\le 6\textrm{e}5
+    0\le n_R\le n_F.
 \end{gather*}
-Because $n_I$ is potentially unbounded, solving equation \ref{eq:1} for $n_I$
-provides a surface bounded by $0\le n_R\le n_F$ and $t_C\le t_I\le t_H$
+Solving \autoref{eq:surface} for $n_I$ provides a surface bounded in two dimensions
+by $0\le n_R\le n_F$ and $t_C\le t_I\le t_H$, but where $0\le n_I$ is potentially unbounded
+(\autoref{fig:surface}).
 \[
-    n_I = \frac{t_T n_T-t_F(n_F-n_R)}{t_I}.
+    (n_R,t_I,f):\quad
+    f(n_R,t_I) = n_I = \frac{t_T n_T+t_F(n_R-n_F)}{t_I}.
 \]
-\Surf{4000}{500}{9000}{700}
+\autoref{eq:constraint} further restricts potential solutions.
+Given a satisfactory $n_R$, $n_I=n_T-n_F+n_R$.
+Then we instead solve \autoref{eq:surface} for $t_I$.
+As a result, these restricted solutions lie within a curve embedded within the surface.
+\[
+    (n_R,h,g):\quad
+    g(n_R) = n_I = n_T-n_F+n_R,\quad
+    h(n_R) = t_I = \frac{t_T n_T-t_F(n_F-n_R)}{n_T-n_F+n_R}
+\]
+\begin{figure}
+    \begin{center}
+        \Surf{4000}{500}{9000}{700}
+    \end{center}
+    \caption[]{%
+        The $(n_R,t_I,f)$ solution surface
+        and $(n_R,h,g)$ embedded curve.
+    }
+    \label{fig:surface}
+\end{figure}
+With respect to $t_I$, $h$ is monotone decreasing, but monotone increasing with respect to $n_R$.
+Thus minimizing with respect to $n_I$, considering the constraints, is a matter of solving for where the embedded
+curve intersects with either $n_R=0$, $t_I=t_H$, or $t_I=t_C$.
 
 
 
@@ -213,38 +231,27 @@ provides a surface bounded by $0\le n_R\le n_F$ and $t_C\le t_I\le t_H$
 
 
 
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{6000}{600}{21000}{900} % green example
+            \caption{$H$ and $C$ mixture added.}
+        \end{subfigure}
+        \vspace{1em}
 
-
-
-%\begin{figure}
-    %\begin{center}
-        %\begin{subfigure}{0.33\textwidth}
-            %\begin{tikzpicture}[scale=0.5]
-                %\Surf{6000}{600}{21000}{900} % green example
-            %\end{tikzpicture}
-            %\caption{$H$ and $C$ mixture added.}
-        %\end{subfigure}
-        %\vspace{1em}
-
-        %\begin{subfigure}{0.33\textwidth}
-            %\begin{tikzpicture}[scale=0.5]
-                %\Surf{6000}{600}{5000}{800} % red example
-            %\end{tikzpicture}
-            %\caption{Volume removed, $H$ added.}
-        %\end{subfigure}
-        %\begin{subfigure}{0.33\textwidth}
-            %\begin{tikzpicture}[scale=0.5]
-                %\Surf{15000}{900}{6000}{600} % blue example
-            %\end{tikzpicture}
-            %\caption{Volume removed, $C$ added.}
-        %\end{subfigure}
-    %\end{center}
-    %\caption{%
-        %Example bounded solutions.
-        %Surface belonging to equations \ref{eq:1} and \ref{eq:2}.
-        %Curve belonging to the additional constraint of equation \ref{eq:3}.
-    %}
-%\end{figure}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{6000}{600}{5000}{800} % red example
+            \caption{Volume removed, $H$ added.}
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{15000}{900}{6000}{600} % blue example
+            \caption{Volume removed, $C$ added.}
+        \end{subfigure}
+    \end{center}
+    \caption{%
+        Example solutions.
+    }
+\end{figure}
 
 %\begin{multicols}{2}
 %\raggedcolumns

@@ -3,6 +3,7 @@
 \usepackage{geometry}[margin=1in]
 \usepackage[T1]{fontenc}
 \usepackage{booktabs}
+\usepackage[inline]{enumitem}
 \usepackage[colorlinks]{hyperref}
 \usepackage{subcaption}
 \usepackage{minted}
@@ -353,29 +354,37 @@ All that is left is game implementation.
 I've decided to implement this entire mixing program along with controls onto a
 single IC housing, and implementation details will depend on what devices we
 specifically need.
-I've chosen to use the following device inputs:
-\begin{itemize}
-    \item the furnace itself, for reading its state,
-    \item two pipe analyzers; one for $H$ and one for $C$,
-    \item one volume pump for removing the $n_R$ initial furnace moles, and
-    \item two volume pumps; one for $H$ and one for $C$, both into $I$.
-\end{itemize}
-With the volume pumps instead of a gas mixer we will be able to scale how
-quickly we add amounts $n_H$ and $n_C$ and with more precision than with
-a gas mixer which moves moles at a specific amount per tick, and we don't need
-to calculate the correct ratio that a gas mixer needs. And instead of having
-a pipe analyzer on $I$ to count up to the correct number of moles, we have the
-$H$ volume pump on until it's number of moles is less-than or equal to $n_{H_0}$
-(the initial number of moles in $H$) minus $n_H$, and likewise for $C$.
+\vspace{1em}
+\begin{paracol}{2}
+    \noindent
+    I've chosen to use the following device inputs:
+    the furnace itself, for reading its state,
+    three pipe analyzers; one each for $H$, $C$ and $I$,
+    one volume pump for removing the $n_R$ initial furnace moles, and
+    one gas mixer for composing $I$.
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        alias Furnace d0
+        alias HAnalyzer d1
+        alias CAnalyzer d2
+        alias IAnalyzer d3
+        alias DumpPump d4
+        alias GasMixer d5
+    \end{minted}
+\end{paracol}
 
-For clarity in describing the steps of the MIPS program, every uniquely labeled
-term of an equation will have a unique register in the code described below, but
-optimizations will need to be made in reusing registers in order to create a
-final MIPS program.
-
-\subsection{Utility functions}
+\subsection{Constants and utility functions}
 
 \begin{paracol}{2}
+    Define the ideal gas constant and volumes.
+    \begin{minted}[autogobble]{text}
+        define R 8.31446261815324
+        define vF 1000
+    \end{minted}
+    \switchcolumn
+    \switchcolumn*
+    \noindent
     For emptying the input pipe $I$ into the furnace
     \switchcolumn
     \begin{minted}[autogobble]{text}
@@ -414,15 +423,19 @@ sends messages which set these values or start the program.
 The \verb+db+ register (that is, the value corresponding to the IC housing)
 acts as a channel through which a ``sender'' can communicate to this one,
 the ``receiver'', and vice versa.
-\begin{itemize}
-    \item If \verb+db+ is \verb+0+, this program is ready to receive a message.
-    \item If \verb+db+ is \verb+-1+, this program is awaiting a follow-up value
-        from a sender. New messages should not be sent.
-    \item If \verb+db+ is \verb+1+/\verb+2+, a sender has sent the message that
-        it wants to send a new target pressure/temperature.
-    \item If \verb+db+ is \verb+3+, a sender has sent the message for this
-        program to start.
-\end{itemize}
+\begin{center}
+    \begin{tabular}{rl}
+        \toprule
+        \verb+db+ value & Description \\
+        \midrule
+        \verb+0+        & Receiver (this program) is ready to receive a message \\
+        \verb+-1+       & Receiver awaiting a follow-up value \\
+        \verb+1+        & Target pressure message \\
+        \verb+2+        & Target temperature message \\
+        \verb+3+        & Start message \\
+        \bottomrule
+    \end{tabular}
+\end{center}
 \begin{paracol}{2}
     First we define the messages.
     \switchcolumn
@@ -433,22 +446,39 @@ the ``receiver'', and vice versa.
         define MsgTTarget 2
         define MsgStart 3
     \end{minted}
-    \switchcolumn*
-    Then in the receiver (this program)
-    \switchcolumn
-    \vspace{-1em}
+\end{paracol}
+
+The receiver program contains in its main loop idle state
+a series of branches based on the kind of message it has received.
+In the case that \verb+db+ has been set to \verb+1+/\verb+2+ then
+the receiver understand that a sender is going to send a value corresponding
+to target pressure/temperature. The receiver sets itself to \verb+-1+ to
+announce to any and all senders that were \emph{not} to program that sent
+the message to not send anything, and to announce to the actual sender that
+this receiver is ready to accept whatever the actual value is. The actual
+sender waits to see \verb+-1+, before overwriting it with the actual value.
+Lastly the receiver sees the value, moves it into the appropriate register,
+and sets itself to \verb+0+ to announce that it is once again ready to
+accept messages. In the case that \verb+3+ was sent, then the receiver instead
+``starts'', and moves on to the actual gas mixing program.
+\vspace{1em}
+\begin{paracol}{2}
+    \noindent
+    The receiver message component.
+    In addition to receiving $p_T$ and $t_T$,
+    we also need to recalculate the target moles $n_T$.
     \begin{minted}[autogobble]{text}
         checkInput:
         l x db Setting
         brne x MsgPTarget 4 # receive pT
         jal waitReceive
         move pT x
-        jal calculateMolesTarget
+        jal calculateTargetMoles
         brne x MsgTTarget 4 # receive tT
         jal waitReceive
         move tT x
-        jal calculateMolesTarget
-        bne x MsgStart main # received start command
+        jal calculateTargetMoles
+        bne x MsgStart main
         # ...
 
         waitReceive:
@@ -458,15 +488,20 @@ the ``receiver'', and vice versa.
         breq x MsgReadyValue -2
         s db Setting MsgReadyMsg
         j ra
+
+        calculateTargetMoles:
+        mul nT pT FurnaceVolume # nT ...
+        div nT nT R
+        div nT nT tT # ... = (pT*vT)/(R*tT)
+        j ra
     \end{minted}
-    \switchcolumn*
-    And in the sender (the control program)
     \switchcolumn
-    \vspace{-1em}
+    \noindent
+    Example sender message component
     \begin{minted}[autogobble]{text}
         checkInput:
-        l x MixerIC Setting
-        bne x MsgReadyMsg ra # skip if mixer busy
+        l x GasControlIC Setting
+        bne x MsgReadyMsg ra # skip if rx busy
         l x PTargetDial Setting # pTarget
         breq x pTarget 6
         move pTarget x
@@ -486,16 +521,16 @@ the ``receiver'', and vice versa.
         move start x
         breqz start 3 # skip if changed to 0
         move y MsgStart
-        s MixerIC Setting y
+        s GasControlIC Setting y
         j ra
 
         waitSend:
-        s MixerIC Setting y
+        s GasControlIC Setting y
         s db Setting 1
         yield
-        l y MixerIC Setting
+        l y GasControlIC Setting
         brne y MsgReadyValue -2
-        s MixerIC Setting x
+        s GasControlIC Setting x
         s db Setting 0
         j ra
     \end{minted}
@@ -505,6 +540,11 @@ the ``receiver'', and vice versa.
 
 Once the start message has been sent, we carry out the entire
 gas mixing procedure for the current state of $F$, $H$ and $C$.
+Note that for or clarity in describing the steps of the MIPS program,
+many uniquely labeled term of an equation will have a unique register alias
+in the code described below, but optimizations will need to be made in
+reusing registers in order to stay within the 16 register limit of the
+final MIPS program.
 \vspace{1em}
 \begin{paracol}{2}
     \noindent
@@ -603,53 +643,60 @@ gas mixing procedure for the current state of $F$, $H$ and $C$.
     \end{minted}
 \end{paracol}
 
-\subsection{Removing $n_R$, mixing and adding $I$}
+\subsection{Removing $n_R$, mixing, and adding $I$}
 
 \vspace{1em}
 \begin{paracol}{2}
     If $n_R>0$, we dump $n_R$ moles from the furnace into the input pipe
-    with the dump pump turned on.
-
-    (Uh oh)
-
-    %then remove $n_R$ moles 
+    and remove $n_R$ via the dump pump.
     \switchcolumn
     \begin{minted}[autogobble]{text}
+        beqz nR mix
+        jal emptyFurnace
+        l y IAnalyzer TotalMoles
+        sub y y nR
+        s DumpPump Setting 100 # TODO Scale this
+        yield
+        s DumpPump On 1
+        l x IAnalyzer TotalMoles
+        brgt x y -3
+        s DumpPump On 0
+        br
     \end{minted}
     \switchcolumn*
     \noindent
     Compose $I$ by mixing $H$ and $C$.
-    \newline
-
-    \noindent
-    {\color{red}
-        TODO: Scale the volume pump settings based on moles per liter
-        and how many moles more need to be moved.
-    }
+    With $H$ as input one, the mixer ratio is given by
+    $\frac{r_H}{r_H+r_C}$, where
+    $r_H$ is $n_H$ divided by the total moles in the $H$ network,
+    and likewise for $r_C$.
     \switchcolumn
     \vspace{-1em}
     \begin{minted}[autogobble]{text}
         mix:
         l x HAnalyzer TotalMoles
         l y CAnalyzer TotalMoles
-        sub nH x nH # reduced moles in H target
-        sub nC y nC # reduced moles in C target
-        s HPump Setting 100 # TODO: Scale these in loop
-        s CPump Setting 100
-        mixLoop:
+        div x nH x # x=(rH=nH / total H moles)
+        div y nC y # y=(rC=nC / total C moles)
+        add y x y # y=rH+rC
+        div x x y # x=rH/(rH+rC), the mixer ratio
+        s Mixer Setting x
         yield
-        s HPump On 1
-        s CPump On 1
-        l x HAnalyzer TotalMoles
-        l y CAnalyzer TotalMoles
-        sgt x x nH # current H > target H
-        sgt y y nC # current C > target C
-        brnez x 2 # skip if H not at target
-        s HPump On 0 # else turn H pump off
-        brnez y 2 # skip if C not at target
-        s CPump On 0 # else turn C pump off
-        and x x y
-        bnez x mixLoop # loop if either above target
+        s Mixer On 1
+        l x IAnalyzer TotalMoles
+        brlt x nI -3
+        s Mixer On 0
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    All that is left is to add the $I$ mixture into the furnace,
+    and we achieve $p_T$ and $t_T$.
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        jal fillFurnace
+        s db Setting 0 # since db=3 all this time
+        j main
     \end{minted}
 \end{paracol}
 

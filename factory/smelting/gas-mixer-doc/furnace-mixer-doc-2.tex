@@ -3,15 +3,15 @@
 \usepackage{geometry}[margin=1in]
 \usepackage[T1]{fontenc}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage[colorlinks]{hyperref}
 \usepackage{subcaption}
 \usepackage{minted}
-%\usepackage{multicol}
-\usepackage{parcolumns}
+\usepackage{multicol}
+\usepackage{paracol}
 \usepackage{mathpazo}
 \usepackage{amsmath}
-%\usepackage{amssymb}
-%\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{mathtools}
 \usepackage{xfrac}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.17}
@@ -39,6 +39,7 @@
 }
 
 \DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
+\DeclareMathOperator{\R}{\mathbb{R}}
 
 \begin{document}
 
@@ -131,52 +132,79 @@
     \end{tikzpicture}
 }
 
-\section{Ideal gas mixer}
+\title{Optimal One-gas Model Furnace}
+\maketitle
 
-\subsection{Utility functions}
+A problem that most players face in Stationeers is automating a furnace
+for smelting alloys, where the issue is reaching a specific pressure target
+and temperature target. With a naïve setup, we combust fuel to raise the
+pressure and temperature, cool the system if need be, then remove pressure
+until both are in range. A better, more precise setup is demanded for
+more difficult alloys.
 
-\begin{parcolumns}{2}
-    \colchunk[1]{%
-        \noindent
-        For emptying the input pipe $I$ into the furnace
-    }\colchunk[2]{%
-        \begin{minted}{text}
-            fillFurnace:
-            yield
-            s Furnace SettingInput 100
-            l x IAnalyzer TotalMoles
-            brgtz -3
-            s Furnace SettingInput 0
-            j ra
-        \end{minted}
-    }
-\end{parcolumns}
+\section{Motivation}
 
-\begin{parcolumns}{2}
-    \colchunk[1]{%
-    %\noindent
-        And for emptying the furnace into the filtration system, which filters all
-        $\CDiox$ back into the input pipe.
-    }\colchunk[2]{%
-        \begin{minted}{text}
-            emptyFurnace:
-            yield
-            s Furnace SettingOutput 100
-            l x Furnace TotalMoles
-            brgtz -3
-            s Furnace SettingOutput 0
-            j ra
-        \end{minted}
-    }
-\end{parcolumns}
+The immediate question is: given the initial conditions of a furnace,
+can I add a specifically formated mixture of gas in order to reach those
+targets without guess-work? The answer is yes: though we may need to remove
+some gas first, there is such a perfect mixture.
+However, embedded within this problem of temperature and pressure is
+an issue of specific heat. A volume $M$ comprised of a mix of the seven
+gasses in the game may have a particular state (parameters pressure, temperature
+and moles per gas), but there are many different gas compositions such that
+the specific heat $s_M$ will satisfy these conditions.
+In-fact, all such possible compositions lie within an $\R^7$ subspace, whose
+support is on what gasses exist in the volume.
+\begin{gather*}
+    s_M
+    = \vec{n_M}\cdot\vec c
+    = (n_M(g_0),\cdots,n_M(g_6))\cdot(c_{g_0},\cdots,c_{g_6}) \\
+    \vec{n_M}_g = n_M(g). \tag{\text{The $g^{\textrm{th}}$ component}}
+\end{gather*}
+The dimension of this subspace depends on the number of gasses in the system,
+thus intentionally restricting the gasses (as per filtering) allows us to reduce
+the dimension as we see fit.
+This, along with the practical purposes of only using one gas (namely, removing
+gases which have useful applications outside pressurizing a volume)
+is why I've decided to implement a one-gas model furnace.
+In such a system, the dimension of the specific heat subspace is reduced to
+a single dimension, and calculation of the energy from combining two
+compositions is made significantly simpler.
+If we fix $g^\ast$ the sole gas of the system, then
+the specific heat $s_M$ of a volume $M$ becomes:
+\[
+    n_M = \sum_{g\in G}n_M(g) = n_M(g^\ast),\quad
+    \vec{n_M}_g = \begin{cases}
+        n_M, & \text{if }g=g^\ast \\
+        0, &\text{if }g\ne g^\ast
+    \end{cases}\\
+    \Rightarrow
+    s_M
+    = \vec{n_M}\cdot\vec{c}
+    = n_M c_{g^\ast}.
+\]
+Furthermore, equation defining the result of combining two volumes with
+different temperatures becomes significantly simpler, where specific heat
+is replaced simply by moles:
+\[
+    t_C s_C = t_A s_A+t_B t_B\
+    \Rightarrow\
+    t_C n_C c_{g^\ast} = t_A n_A c_{g^\ast}+t_B n_B c_{g^\ast}\
+    \Rightarrow\
+    t_C n_C = t_A n_A+t_B n_B.
+\]
 
-\subsection{Mixing algorithm}
+\section{Implementation and optimization}
 
-Considering a system of only one gas $g$ with
+Now we move into the specifics of implementing such a system in the game,
+involving furnaces and pipe networks.
+Considering a system of only one gas with
 a hot source $H$ of temperature $t_H$ and
 a cold source $C$ of temperature $t_C$,
 we can calculate an optimal formulation for bringing a furnace $F$
-(with volume $v_F=1000$, initial pressure $p_F$ and initial temperature $t_F$)
+(with volume $v_F$, initial pressure $p_F$, initial temperature $t_F$,
+and initial moles $n_F=\frac{p_F v_F}{R t_T}$, where
+$R$ is the \href{https://en.wikipedia.org/wiki/Gas_constant}{ideal gas constant})
 to a desired pressure $p_T$ and temperature $t_T$.
 This is accomplished by removing an amount $n_R$ from the furnace and/or adding
 an amount $n_I$ at a specific temperature $t_I$, where $I$ is composed from
@@ -188,78 +216,442 @@ Several gas-law derived equations constrain this process:
     t_I n_I = t_H n_H+t_C n_I \label{eq:added}
 \end{gather}
 Where $n_R$, $t_I$ and $n_I=n_H+n_C$ are to be determined.
-Note the constraint for pressures and temperatures in this system
-for specific volumes or an arbitrary volume $M$:
+Note that each term in this system obeys some constraints:
 \begin{gather*}
-    t_C\le t_M\le t_H,\quad
+    t_C<t_M<t_H,\quad
     0\le n_M,\quad
     0\le n_R\le n_F.
 \end{gather*}
-Solving \autoref{eq:surface} for $n_I$ provides a surface bounded in two dimensions
-by $0\le n_R\le n_F$ and $t_C\le t_I\le t_H$, but where $0\le n_I$ is potentially unbounded
-(\autoref{fig:surface}).
+Solving \autoref{eq:surface} for $n_I$ provides
+a surface bounded in two dimensions
+by $0\le n_R\le n_F$ and $t_C\le t_I\le t_H$,
+but where $0\le n_I$ is potentially unbounded.
 \[
     (n_R,t_I,f):\quad
     f(n_R,t_I) = n_I = \frac{t_T n_T+t_F(n_R-n_F)}{t_I}.
 \]
-\autoref{eq:constraint} further restricts potential solutions.
-Given a satisfactory $n_R$, $n_I=n_T-n_F+n_R$.
-Then we instead solve \autoref{eq:surface} for $t_I$.
-As a result, these restricted solutions lie within a curve embedded within the surface.
+\autoref{eq:constraint} further restricts potential solutions, but
+given a satisfactory amount to remove $n_R$ provides a particular solution
+for the amount to add: $n_I=n_T-n_F+n_R$.
+Then we instead solve \autoref{eq:surface} for $t_I$,
+and as a result these restricted solutions lie
+within a curve embedded within the surface.
 \[
     (n_R,h,g):\quad
     g(n_R) = n_I = n_T-n_F+n_R,\quad
-    h(n_R) = t_I = \frac{t_T n_T-t_F(n_F-n_R)}{n_T-n_F+n_R}
+    h(n_R) = t_I = \frac{t_T n_T-t_F(n_F-n_R)}{n_T-n_F+n_R}.
 \]
-\begin{figure}
-    \begin{center}
-        \Surf{4000}{500}{9000}{700}
-    \end{center}
-    \caption[]{%
-        The $(n_R,t_I,f)$ solution surface
-        and $(n_R,h,g)$ embedded curve.
+%\begin{figure}
+%    \begin{center}
+%        \Surf{4000}{500}{9000}{700}
+%    \end{center}
+%    \caption[]{%
+%        The $(n_R,t_I,f)$ solution surface
+%        and $(n_R,h,g)$ embedded curve.
+%    }
+%    \label{fig:surface}
+%\end{figure}
+\noindent
+With respect to $t_I$, $h$ is monotone decreasing,
+but monotone increasing with respect to $n_R$.
+Thus minimizing with respect to $n_I$ in the domain is
+a matter of minimizing $n_R$ and maximizing $t_I$.
+However, $0\le n_R$ is naïve, and \autoref{eq:added}
+imparts a narrower lower-bound.
+\begin{multicols}{2}
+    \raggedcolumns
+    \tightmath
+    \begin{align*}
+        t_C n_I &\le t_I n_I \\
+        n_F(n_F-t_C)-n_T(t_T-t_C) &\le n_R(t_F-t_C)
+    \end{align*}
+    \begin{equation}\label{eq:nRC}
+        n_{R_C} = n_F-\frac{n_T(t_T-t_C)}{t_F-t_C} \le n_R
+    \end{equation}
+    \columnbreak
+
+    \begin{align*}
+        t_I n_I &\le t_H n_I \\
+        t_Tn_T-t_F(n_F-n_R) &\le t_H(n_T-n_F+n_R)
+    \end{align*}
+    \begin{equation}\label{eq:nRH}
+        n_{R_H} = n_F-\frac{n_T(t_H-t_T)}{t_H-t_F} \le n_R
+    \end{equation}
+\end{multicols}
+\noindent
+Thus $\max(n_{R_C},n_{R_H}) \le n_R$.
+In-fact, the curve crosses a hyperplane boundary at a point $(n_R,t_I,n_I)$
+which minimizes $n_I$ and for which $n_R=\max(0, n_{R_C}, n_{R_H})$.
+We then easily solve for the remaining coordinates.
+
+In the end, finding the $n_I$ minimizing point $(n_R,t_I,n_I)$:
+\begin{align}
+    n_R &= \max(0, n_{R_C}, n_{R_H}) \label{eq:nR} \\
+    t_I &= \frac{t_T n_T-t_F(n_F-n_R)}{n_T-n_F+n_R} \label{eq:tI} \\
+    n_I &= n_T-n_F+n_R. \label{eq:nI}
+\end{align}
+Which hyperplane the curve crosses corresponds to a certain procedure of
+the gas mixer that in the end we are making:
+the curve either:
+\begin{itemize}
+    \item Crosses $n_R=0$:
+        a mixture of $H$ and $C$ is added, or
+    \item Crosses $t_I=t_H$:
+        some volume of $F$ is removed and only $H$ is added, or
+    \item Crosses $t_I=t_C$:
+        some volume of $F$ volume is removed and only $C$ is added.
+\end{itemize}
+%\begin{figure}
+%    \begin{center}
+%        \begin{subfigure}{0.48\textwidth}
+%            \Full[.7]{6000}{600}{21000}{900} % green example
+%            \caption{$H$ and $C$ mixture added.}
+%        \end{subfigure}
+%        \vspace{1em}
+%
+%        \begin{subfigure}{0.48\textwidth}
+%            \Full[.7]{6000}{600}{5000}{800} % red example
+%            \caption{Volume removed, $H$ added.}
+%        \end{subfigure}
+%        \begin{subfigure}{0.48\textwidth}
+%            \Full[.7]{15000}{900}{6000}{600} % blue example
+%            \caption{Volume removed, $C$ added.}
+%        \end{subfigure}
+%    \end{center}
+%    \caption{%
+%        Example solutions.
+%    }
+%\end{figure}
+Lastly, since $n_I$ is composed of moles from $H$ and $C$,
+we also need to calculate $n_H$ and $n_C$,
+which is trivial given that $n_I=n_H+n_C$ and $t_I n_I=t_H n_H+t_C n_C$.
+\begin{equation}\label{eq:nC}
+    \begin{aligned}[b]
+        t_I &= n_H+n_C \\
+        \Rightarrow n_C &= n_I-n_H.
+    \end{aligned}
+\end{equation}
+\begin{equation}\label{eq:nH}
+    \begin{aligned}[b]
+        t_I n_I
+        &= t_H n_H+t_C n_C \\
+        &= t_H n_H+t_C(n_I-n_H) \\
+        &= t_C n_I+n_H(t_H-t_C) \\
+        \Rightarrow n_H &= \frac{t_I n_I-t_C n_I}{t_H-t_C}.
+    \end{aligned}
+\end{equation}
+And what we are left with is precisely the minimum number of moles $n_R$ to
+remove from the furnace initially, and (with respect to $n_R$) $n_H$ and $n_C$
+the precise numbers of moles to add from the $H$ and $C$ sources respectively,
+such that $F$ will achieve pressure $p_T$ and temperature $t_T$ exactly.
+All that is left is game implementation.
+
+\pagebreak
+
+\section{Game implementation with MIPS}
+
+I've decided to implement this entire mixing program along with controls onto a
+single IC housing, and implementation details will depend on what devices we
+specifically need.
+I've chosen to use the following device inputs:
+\begin{itemize}
+    \item the furnace itself, for reading its state,
+    \item two pipe analyzers; one for $H$ and one for $C$,
+    \item one volume pump for removing the $n_R$ initial furnace moles, and
+    \item two volume pumps; one for $H$ and one for $C$, both into $I$.
+\end{itemize}
+With the volume pumps instead of a gas mixer we will be able to scale how
+quickly we add amounts $n_H$ and $n_C$ and with more precision than with
+a gas mixer which moves moles at a specific amount per tick, and we don't need
+to calculate the correct ratio that a gas mixer needs. And instead of having
+a pipe analyzer on $I$ to count up to the correct number of moles, we have the
+$H$ volume pump on until it's number of moles is less-than or equal to $n_{H_0}$
+(the initial number of moles in $H$) minus $n_H$, and likewise for $C$.
+
+For clarity in describing the steps of the MIPS program, every uniquely labeled
+term of an equation will have a unique register in the code described below, but
+optimizations will need to be made in reusing registers in order to create a
+final MIPS program.
+
+\subsection{Utility functions}
+
+\begin{paracol}{2}
+    For emptying the input pipe $I$ into the furnace
+    \switchcolumn
+    \begin{minted}[autogobble]{text}
+        fillFurnace:
+        yield
+        s Furnace SettingInput 100
+        l x IAnalyzer TotalMoles
+        brgtz -3
+        s Furnace SettingInput 0
+        j ra
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    And for emptying the furnace into the filtration system,
+    which filters all $\CDiox$ back into the input pipe.
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        emptyFurnace:
+        yield
+        s Furnace SettingOutput 100
+        l x Furnace TotalMoles
+        brgtz -3
+        s Furnace SettingOutput 0
+        j ra
+    \end{minted}
+\end{paracol}
+
+\subsection{Acquiring $p_T$ and $t_T$}
+
+Since all six of our device pins are being used already, we have no way
+to directly set the target pressure and temperature for our program,
+or even any way to directly start it.
+Instead we can use a messaging system, where another program (a control program)
+sends messages which set these values or start the program.
+The \verb+db+ register (that is, the value corresponding to the IC housing)
+acts as a channel through which a ``sender'' can communicate to this one,
+the ``receiver'', and vice versa.
+\begin{itemize}
+    \item If \verb+db+ is \verb+0+, this program is ready to receive a message.
+    \item If \verb+db+ is \verb+-1+, this program is awaiting a follow-up value
+        from a sender. New messages should not be sent.
+    \item If \verb+db+ is \verb+1+/\verb+2+, a sender has sent the message that
+        it wants to send a new target pressure/temperature.
+    \item If \verb+db+ is \verb+3+, a sender has sent the message for this
+        program to start.
+\end{itemize}
+\begin{paracol}{2}
+    First we define the messages.
+    \switchcolumn
+    \begin{minted}[autogobble]{text}
+        define MsgReadyMsg 0
+        define MsgReadyValue -1
+        define MsgPTarget 1
+        define MsgTTarget 2
+        define MsgStart 3
+    \end{minted}
+    \switchcolumn*
+    Then in the receiver (this program)
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        checkInput:
+        l x db Setting
+        brne x MsgPTarget 4 # receive pT
+        jal waitReceive
+        move pT x
+        jal calculateMolesTarget
+        brne x MsgTTarget 4 # receive tT
+        jal waitReceive
+        move tT x
+        jal calculateMolesTarget
+        bne x MsgStart main # received start command
+        # ...
+
+        waitReceive:
+        s db Setting MsgReadyValue
+        yield
+        l x db Setting
+        breq x MsgReadyValue -2
+        s db Setting MsgReadyMsg
+        j ra
+    \end{minted}
+    \switchcolumn*
+    And in the sender (the control program)
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        checkInput:
+        l x MixerIC Setting
+        bne x MsgReadyMsg ra # skip if mixer busy
+        l x PTargetDial Setting # pTarget
+        breq x pTarget 6
+        move pTarget x
+        mul x x 100
+        s PTargetDisplay Setting x
+        move y MsgPTarget
+        j waitSend
+        l x TTargetDial Setting # tTarget
+        breq x tTarget 6
+        move tTarget x
+        mul x x 20
+        s TTargetDisplay Setting x
+        move y MsgTTarget
+        j waitSend
+        l x StartButton Activate # start
+        breq x start 5
+        move start x
+        breqz start 3 # skip if changed to 0
+        move y MsgStart
+        s MixerIC Setting y
+        j ra
+
+        waitSend:
+        s MixerIC Setting y
+        s db Setting 1
+        yield
+        l y MixerIC Setting
+        brne y MsgReadyValue -2
+        s MixerIC Setting x
+        s db Setting 0
+        j ra
+    \end{minted}
+\end{paracol}
+
+\subsection{Calculating $n_R$, $t_I$, $n_I$, and $n_H$}
+
+Once the start message has been sent, we carry out the entire
+gas mixing procedure for the current state of $F$, $H$ and $C$.
+\vspace{1em}
+\begin{paracol}{2}
+    \noindent
+    \autoref{eq:nRC}
+    \[
+        n_{R_C} = n_F-\frac{n_T(t_T-t_C)}{t_F-t_C} \le n_R
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        calculate:
+        sub nRC tT tC
+        mul nRC nT nRC
+        sub x tF tC
+        div nRC nRC x
+        sub nRC nF nRC # nRC=nF-nT(tT-tC)/(tF-tC)
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:nRH}
+    \[
+        n_{R_H} = n_F-\frac{n_T(t_H-t_T)}{t_H-t_F} \le n_R
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        sub nRH tT tH
+        mul nRH nT nRH
+        sub x tH tF
+        div nRH nRH x
+        sub nRH nF nRH # nRC=nF-nT(tH-tT)/(tH-tF)
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:nR}
+    \[
+        n_R = \max(n_{R_C},n_{R_H},0)
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        max nR nRC nRH
+        max nR nR 0 # nR=max(nRC,nRH,0)
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:nI}
+    \[
+        n_I = n_T-n_F+n_R
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        sub nI nT nF
+        add nI nI nR # nI=nT-nF+nR
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:tI}
+    \[
+        t_I = \frac{t_T n_T-t_F(n_F-n_R)}{n_I}
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        mul tI tT nT
+        sub x nF nR
+        mul x tF x
+        div tI tI nI # tI=(tT*nT-tF(nF-nR))/nI
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:nH}
+    \[
+        n_H = \frac{t_I n_I-t_C n_I}{t_H-t_C}
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        mul nH tI nI
+        mul x tC nI
+        sub nH nH x
+        sub x tH tC
+        div nH nH x # nH=(tI*nI-tC*nI)/(tH-tC)
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    \autoref{eq:nC}
+    \[
+        n_C = n_I-n_H
+    \]
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        sub nC tI nH
+    \end{minted}
+\end{paracol}
+
+\subsection{Removing $n_R$, mixing and adding $I$}
+
+\vspace{1em}
+\begin{paracol}{2}
+    If $n_R>0$, we dump $n_R$ moles from the furnace into the input pipe
+    with the dump pump turned on.
+
+    (Uh oh)
+
+    %then remove $n_R$ moles 
+    \switchcolumn
+    \begin{minted}[autogobble]{text}
+    \end{minted}
+    \switchcolumn*
+    \noindent
+    Compose $I$ by mixing $H$ and $C$.
+    \newline
+
+    \noindent
+    {\color{red}
+        TODO: Scale the volume pump settings based on moles per liter
+        and how many moles more need to be moved.
     }
-    \label{fig:surface}
-\end{figure}
-With respect to $t_I$, $h$ is monotone decreasing, but monotone increasing with respect to $n_R$.
-Thus minimizing with respect to $n_I$, considering the constraints, is a matter of solving for where the embedded
-curve intersects with either $n_R=0$, $t_I=t_H$, or $t_I=t_C$.
+    \switchcolumn
+    \vspace{-1em}
+    \begin{minted}[autogobble]{text}
+        mix:
+        l x HAnalyzer TotalMoles
+        l y CAnalyzer TotalMoles
+        sub nH x nH # reduced moles in H target
+        sub nC y nC # reduced moles in C target
+        s HPump Setting 100 # TODO: Scale these in loop
+        s CPump Setting 100
+        mixLoop:
+        yield
+        s HPump On 1
+        s CPump On 1
+        l x HAnalyzer TotalMoles
+        l y CAnalyzer TotalMoles
+        sgt x x nH # current H > target H
+        sgt y y nC # current C > target C
+        brnez x 2 # skip if H not at target
+        s HPump On 0 # else turn H pump off
+        brnez y 2 # skip if C not at target
+        s CPump On 0 # else turn C pump off
+        and x x y
+        bnez x mixLoop # loop if either above target
+    \end{minted}
+\end{paracol}
 
-
-
-
-
-
-
-\begin{figure}
-    \begin{center}
-        \begin{subfigure}{0.48\textwidth}
-            \Full[.7]{6000}{600}{21000}{900} % green example
-            \caption{$H$ and $C$ mixture added.}
-        \end{subfigure}
-        \vspace{1em}
-
-        \begin{subfigure}{0.48\textwidth}
-            \Full[.7]{6000}{600}{5000}{800} % red example
-            \caption{Volume removed, $H$ added.}
-        \end{subfigure}
-        \begin{subfigure}{0.48\textwidth}
-            \Full[.7]{15000}{900}{6000}{600} % blue example
-            \caption{Volume removed, $C$ added.}
-        \end{subfigure}
-    \end{center}
-    \caption{%
-        Example solutions.
-    }
-\end{figure}
-
-%\begin{multicols}{2}
-%\raggedcolumns
-%\noindent
-%\columnbreak
-
-%\begin{minted}{text}
-%\end{minted}
-%\end{multicols}
 
 \end{document}

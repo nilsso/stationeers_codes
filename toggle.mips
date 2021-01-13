@@ -1,0 +1,17 @@
+# Toggle
+alias reader d0
+
+alias on r0
+alias prev r1
+alias curr r2
+
+s db Setting on
+
+main:
+l curr reader Setting
+beq curr prev main # skip if unchanged
+move prev curr
+beqz curr main # skip if changed to zero
+sne on curr on
+s db Setting on
+j main

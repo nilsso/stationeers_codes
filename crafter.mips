@@ -1,0 +1,99 @@
+define IngotAstraloy 412924554
+define IngotConstantan 1058547521
+define IngotCopper -404336834
+define IngotElectrum 502280180
+define IngotInconel -787796599
+define IngotInvar -297990285
+define IngotIron -1301215609
+define IngotGold 226410516
+define IngotHastelloy 1579842814
+define IngotLead 2134647745
+define IngotNickel -1406385572
+define IngotSilver -929742000
+define IngotSilicon -290196476
+define IngotSolder -82508479
+define IngotSteel -654790771
+define IngotStelite -1897868623
+define IngotWaspaloy 156348098
+
+define RequestThreshold 100
+
+alias AL d0 # autolathe
+alias EP d1 # electronics printer
+alias HY d2 # hydraulic pipe bender
+alias TM d3 # tool manufactory
+alias preRequestMem d4
+
+alias devicePtr r0
+alias x r1
+alias y r2
+alias preRequest r3
+alias mask r4
+
+main:
+move preRequest 0
+move mask 15
+move offset
+move devicePtr 0 # autolathe
+jal updatePreRequest
+move devicePtr 1 # electronics printer
+jal updatePreRequest
+move devicePtr 2 # hydraulic pipe bender
+jal updatePreRequest
+move devicePtr 3 # tool manufactory
+jal updatePreRequest
+j main
+
+updatePreRequest:
+lr x dr0 Contents Astraloy
+brgt x x RequestThreshold 2
+or preRequest preRequest 1
+lr x dr0 Contents Constantan
+brgt x x RequestThreshold 2
+or preRequest preRequest 2
+lr x dr0 Contents Copper
+brgt x x RequestThreshold 2
+or preRequest preRequest 4
+lr x dr0 Contents Electrum
+brgt x x RequestThreshold 2
+or preRequest preRequest 8
+lr x dr0 Contents Inconel
+brgt x x RequestThreshold 2
+or preRequest preRequest 16
+lr x dr0 Contents Invar
+brgt x x RequestThreshold 2
+or preRequest preRequest 32
+lr x dr0 Contents Iron
+brgt x x RequestThreshold 2
+or preRequest preRequest 64
+lr x dr0 Contents Gold
+brgt x x RequestThreshold 2
+or preRequest preRequest 128
+lr x dr0 Contents Hastelloy
+brgt x x RequestThreshold 2
+or preRequest preRequest 256
+lr x dr0 Contents Lead
+brgt x x RequestThreshold 2
+or preRequest preRequest 512
+lr x dr0 Contents Nickel
+brgt x x RequestThreshold 2
+or preRequest preRequest 1024
+lr x dr0 Contents Silver
+brgt x x RequestThreshold 2
+or preRequest preRequest 2048
+lr x dr0 Contents Silicon
+brgt x x RequestThreshold 2
+or preRequest preRequest 4096
+lr x dr0 Contents Solder
+brgt x x RequestThreshold 2
+or preRequest preRequest 8192
+lr x dr0 Contents Steel
+brgt x x RequestThreshold 2
+or preRequest preRequest 16384
+lr x dr0 Contents Stelite
+brgt x x RequestThreshold 2
+or preRequest preRequest 32768
+lr x dr0 Contents Waspaloy
+brgt x x RequestThreshold 2
+or preRequest preRequest 65536
+j ra

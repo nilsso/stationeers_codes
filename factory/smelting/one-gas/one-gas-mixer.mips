@@ -1,0 +1,102 @@
+# One-gas model mixer
+alias IAnalyzer d0
+alias HAnalyzer d1
+alias CAnalyzer d2
+alias HPump d3
+alias HPump d4
+alias DumpPump d5
+
+define R 8.31446261815324
+define vF 1000
+define MsgReadyMsg 0
+define MsgReadyValue -1
+define MsgPTarget 1
+define MsgTTarget 2
+define MsgStart 3
+
+main:
+l x db Setting
+brne x MsgPTarget 4 # receive pT
+jal waitReceive
+move pT x
+jal calculateTargetMoles
+brne x MsgTTarget 4 # receive tT
+jal waitReceive
+move tT x
+jal calculateTargetMoles
+bne x MsgStart main # begin mixing algorithm
+sub nRC tT tC
+mul nRC nT nRC
+sub x tF tC
+div nRC nRC x
+sub nRC nF nRC # nRC=nF-nT(tT-tC)/(tF-tC)
+sub nRH tT tH
+mul nRH nT nRH
+sub x tH tF
+div nRH nRH x
+sub nRH nF nRH # nRC=nF-nT(tH-tT)/(tH-tF)
+max nR nRC nRH
+max nR nR 0 # nR=max(nRC,nRH,0)
+sub nI nT nF
+add nI nI nR # nI=nT-nF+nR
+mul tI tT nT
+sub x nF nR
+mul x tF x
+div tI tI nI # tI=(tT*nT-tF(nF-nR))/nI
+mul nH tI nI
+mul x tC nI
+sub nH nH x
+sub x tH tC
+div nH nH x # nH=(tI*nI-tC*nI)/(tH-tC)
+sub nC tI nH # nC=nI-nH
+beqz nR mix # skip if nothing to remove
+jal emptyFurnace
+l y IAnalyzer TotalMoles
+sub y y nR
+s DumpPump Setting 100 # TODO Scale this
+yield
+s DumpPump On 1
+l x IAnalyzer TotalMoles
+brgt x y -3
+s DumpPump On 0
+
+
+fillFurnace:
+yield
+s Furnace SettingInput 100
+l x IAnalyzer TotalMoles
+brgtz -3
+s Furnace SettingInput 0
+j ra
+emptyFurnace:
+yield
+s Furnace SettingOutput 100
+l x Furnace TotalMoles
+brgtz -3
+s Furnace SettingOutput 0
+j ra
+waitReceive:
+s db Setting MsgReadyValue
+yield
+l x db Setting
+breq x MsgReadyValue -2
+s db Setting MsgReadyMsg
+j ra
+calculateTargetMoles:
+mul nT pT FurnaceVolume # nT ...
+div nT nT R
+div nT nT tT # ... = (pT*vT)/(R*tT)
+j ra
+mix:
+l x HAnalyzer TotalMoles
+l y CAnalyzer TotalMoles
+div x nH x # x=(rH=nH / total H moles)
+div y nC y # y=(rC=nC / total C moles)
+add y x y # y=rH+rC
+div x x y # x=rH/(rH+rC), the mixer ratio
+s Mixer Setting x
+yield
+s Mixer On 1
+l x IAnalyzer TotalMoles
+brlt x nI -3
+s Mixer On 0

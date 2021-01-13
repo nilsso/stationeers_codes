@@ -1,30 +1,70 @@
-alias sorter d0
+define Coal 1724793494
+define IceOxite -1805394113
+define IceVolatile 1253102035
+define IceWater 1217489948
+define IngotAstraloy 412924554
+define IngotConstantan 1058547521
+define IngotCopper -404336834
+define IngotElectrum 502280180
+define IngotInconel -787796599
+define IngotInvar -297990285
+define IngotIron -1301215609
+define IngotGold 226410516
+define IngotHastelloy 1579842814
+define IngotLead 2134647745
+define IngotNickel -1406385572
+define IngotSilver -929742000
+define IngotSilicon -290196476
+define IngotSolder -82508479
+define IngotSteel -654790771
+define IngotStelite -1897868623
+define IngotWaspaloy 156348098
+define OreCobalt -983091249
+define OreCopper -707307845
+define OreIron 1758427767
+define OreGold -1348105509
+define OreLead -190236170
+define OreNickel 1830218956
+define OreSilver -916518678
+define OreSilicon 1103972403
+define OreUranium -1516581844
 
-alias x r0
-alias y r1
+alias silo d0
+alias inSorter d1
+alias outStacker d2
+alias filterHashMem d3
+alias quantityMem d4
+alias requestMem d5
 
+alias filterHash r0 # filterHashMem Setting
+alias occupiedBit r1 # db Setting
+alias x r2
+
+s sorter On 1
 s sorter Mode 2
+s outStacker On 1
+s outStacker Mode 1
+s outStacker Setting 100
+l filterHash filterHashMem Setting
+l occupiedBit db Setting
 
 main:
 yield
-ls x sorter 0 OccupantHash
-#beq x  -676435305 sendLeft # Mining Belt
-beq x  1724793494 sendLeft # Ore (Coal)
-beq x  -707307845 sendLeft # Ore (Copper)
-beq x  1758427767 sendLeft # Ore (Iron)
-beq x -1348105509 sendLeft # Ore (Gold)
-beq x  -916518678 sendLeft # Ore (Silver)
-beq x  -190236170 sendLeft # Ore (Lead)
-beq x  1103972403 sendLeft # Ore (Silicon)
-beq x  1830218956 sendLeft # Ore (Nickel)
-beq x  -983091249 sendLeft # Ore (Cobalt)
-beq x -1516581844 sendLeft # Ore (Uranium)
-beq x  1217489948 sendLeft # Ice (Water)
-beq x -1805394113 sendLeft # Ice (Oxite)
-beq x  1253102035 sendLeft # Ice (Volatiles)
-s sorter Output 1
-j main
 
-sendLeft:
-s sorter Output 0
+Sort:
+ls x sorter 0 OccupantHash # slot reader
+seq x x filterHash # compare
+s sorter Output x # select + writer
+
+SiloToOutStacker:
+ls x outStacker 2 Occupied
+brgz x OutStackerToFabricators
+l x silo Quantity
+brgz x OutStackerToFabricators
+s silo Open 1
+yield
+s silo Open 0
+
+OutStackerToFabricators:
+
 j main

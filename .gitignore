@@ -1,5 +1,9 @@
 *.aux
+*.auxlock
+*.dpth
 *.log
+*.md5
 *.out
+
 _minted-*
 .ipynb*

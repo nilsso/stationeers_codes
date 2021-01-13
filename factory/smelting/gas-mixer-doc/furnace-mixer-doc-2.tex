@@ -44,6 +44,8 @@
 
 \begin{document}
 
+\def\lexer{stationeers-mips-lexer-dumb.py:CustomLexer -x}
+
 \def\GasConstant{8.314}
 \def\vF{1000}
 \def\tC{230}
@@ -242,16 +244,16 @@ within a curve embedded within the surface.
     g(n_R) = n_I = n_T-n_F+n_R,\quad
     h(n_R) = t_I = \frac{t_T n_T-t_F(n_F-n_R)}{n_T-n_F+n_R}.
 \]
-%\begin{figure}
-%    \begin{center}
-%        \Surf{4000}{500}{9000}{700}
-%    \end{center}
-%    \caption[]{%
-%        The $(n_R,t_I,f)$ solution surface
-%        and $(n_R,h,g)$ embedded curve.
-%    }
-%    \label{fig:surface}
-%\end{figure}
+\begin{figure}
+    \begin{center}
+        \Surf{4000}{500}{9000}{700}
+    \end{center}
+    \caption[]{%
+        The $(n_R,t_I,f)$ solution surface
+        and $(n_R,h,g)$ embedded curve.
+    }
+    \label{fig:surface}
+\end{figure}
 \noindent
 With respect to $t_I$, $h$ is monotone decreasing,
 but monotone increasing with respect to $n_R$.
@@ -302,27 +304,27 @@ the curve either:
     \item Crosses $t_I=t_C$:
         some volume of $F$ volume is removed and only $C$ is added.
 \end{itemize}
-%\begin{figure}
-%    \begin{center}
-%        \begin{subfigure}{0.48\textwidth}
-%            \Full[.7]{6000}{600}{21000}{900} % green example
-%            \caption{$H$ and $C$ mixture added.}
-%        \end{subfigure}
-%        \vspace{1em}
-%
-%        \begin{subfigure}{0.48\textwidth}
-%            \Full[.7]{6000}{600}{5000}{800} % red example
-%            \caption{Volume removed, $H$ added.}
-%        \end{subfigure}
-%        \begin{subfigure}{0.48\textwidth}
-%            \Full[.7]{15000}{900}{6000}{600} % blue example
-%            \caption{Volume removed, $C$ added.}
-%        \end{subfigure}
-%    \end{center}
-%    \caption{%
-%        Example solutions.
-%    }
-%\end{figure}
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{6000}{600}{21000}{900} % green example
+            \caption{$H$ and $C$ mixture added.}
+        \end{subfigure}
+        \vspace{1em}
+
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{6000}{600}{5000}{800} % red example
+            \caption{Volume removed, $H$ added.}
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.7]{15000}{900}{6000}{600} % blue example
+            \caption{Volume removed, $C$ added.}
+        \end{subfigure}
+    \end{center}
+    \caption{%
+        Example solutions.
+    }
+\end{figure}
 Lastly, since $n_I$ is composed of moles from $H$ and $C$,
 we also need to calculate $n_H$ and $n_C$,
 which is trivial given that $n_I=n_H+n_C$ and $t_I n_I=t_H n_H+t_C n_C$.
@@ -354,6 +356,12 @@ All that is left is game implementation.
 I've decided to implement this entire mixing program along with controls onto a
 single IC housing, and implementation details will depend on what devices we
 specifically need.
+
+Note that for or clarity in describing the steps of the MIPS program,
+many uniquely labeled term of an equation will have a unique register alias
+in the code described below, but optimizations will need to be made in
+reusing registers in order to stay within the 16 register limit of the
+final MIPS program.
 \vspace{1em}
 \begin{paracol}{2}
     \noindent
@@ -364,7 +372,7 @@ specifically need.
     one gas mixer for composing $I$.
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         alias Furnace d0
         alias HAnalyzer d1
         alias CAnalyzer d2
@@ -378,16 +386,16 @@ specifically need.
 
 \begin{paracol}{2}
     Define the ideal gas constant and volumes.
-    \begin{minted}[autogobble]{text}
+    \switchcolumn
+    \begin{minted}[autogobble]{\lexer}
         define R 8.31446261815324
         define vF 1000
     \end{minted}
-    \switchcolumn
     \switchcolumn*
     \noindent
     For emptying the input pipe $I$ into the furnace
     \switchcolumn
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         fillFurnace:
         yield
         s Furnace SettingInput 100
@@ -402,7 +410,7 @@ specifically need.
     which filters all $\CDiox$ back into the input pipe.
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         emptyFurnace:
         yield
         s Furnace SettingOutput 100
@@ -439,7 +447,7 @@ the ``receiver'', and vice versa.
 \begin{paracol}{2}
     First we define the messages.
     \switchcolumn
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         define MsgReadyMsg 0
         define MsgReadyValue -1
         define MsgPTarget 1
@@ -467,7 +475,7 @@ accept messages. In the case that \verb+3+ was sent, then the receiver instead
     The receiver message component.
     In addition to receiving $p_T$ and $t_T$,
     we also need to recalculate the target moles $n_T$.
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         checkInput:
         l x db Setting
         brne x MsgPTarget 4 # receive pT
@@ -498,7 +506,7 @@ accept messages. In the case that \verb+3+ was sent, then the receiver instead
     \switchcolumn
     \noindent
     Example sender message component
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         checkInput:
         l x GasControlIC Setting
         bne x MsgReadyMsg ra # skip if rx busy
@@ -540,11 +548,6 @@ accept messages. In the case that \verb+3+ was sent, then the receiver instead
 
 Once the start message has been sent, we carry out the entire
 gas mixing procedure for the current state of $F$, $H$ and $C$.
-Note that for or clarity in describing the steps of the MIPS program,
-many uniquely labeled term of an equation will have a unique register alias
-in the code described below, but optimizations will need to be made in
-reusing registers in order to stay within the 16 register limit of the
-final MIPS program.
 \vspace{1em}
 \begin{paracol}{2}
     \noindent
@@ -554,7 +557,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         calculate:
         sub nRC tT tC
         mul nRC nT nRC
@@ -570,7 +573,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         sub nRH tT tH
         mul nRH nT nRH
         sub x tH tF
@@ -585,7 +588,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         max nR nRC nRH
         max nR nR 0 # nR=max(nRC,nRH,0)
     \end{minted}
@@ -597,7 +600,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         sub nI nT nF
         add nI nI nR # nI=nT-nF+nR
     \end{minted}
@@ -609,7 +612,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         mul tI tT nT
         sub x nF nR
         mul x tF x
@@ -623,7 +626,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         mul nH tI nI
         mul x tC nI
         sub nH nH x
@@ -638,7 +641,7 @@ final MIPS program.
     \]
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         sub nC tI nH
     \end{minted}
 \end{paracol}
@@ -650,7 +653,7 @@ final MIPS program.
     If $n_R>0$, we dump $n_R$ moles from the furnace into the input pipe
     and remove $n_R$ via the dump pump.
     \switchcolumn
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         beqz nR mix
         jal emptyFurnace
         l y IAnalyzer TotalMoles
@@ -672,7 +675,7 @@ final MIPS program.
     and likewise for $r_C$.
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         mix:
         l x HAnalyzer TotalMoles
         l y CAnalyzer TotalMoles
@@ -693,7 +696,7 @@ final MIPS program.
     and we achieve $p_T$ and $t_T$.
     \switchcolumn
     \vspace{-1em}
-    \begin{minted}[autogobble]{text}
+    \begin{minted}[autogobble]{\lexer}
         jal fillFurnace
         s db Setting 0 # since db=3 all this time
         j main

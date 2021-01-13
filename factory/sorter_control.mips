@@ -103,6 +103,7 @@ s db Setting output
 j ra
 
 bitwiseOr:
+push ra
 move wordOr 0
 move i 1
 bitwiseOrLoop:
@@ -118,5 +119,7 @@ add wordOr bitOr wordOr # add to result
 mul i 2 i
 bgtz wordA bitwiseOrLoop # loop if either word not 0
 bgtz wordB bitwiseOrLoop
+pop ra
 j ra
+getLSbits:
 

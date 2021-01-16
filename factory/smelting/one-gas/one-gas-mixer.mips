@@ -1,64 +1,105 @@
 # One-gas model mixer
 alias IAnalyzer d0
-alias HAnalyzer d1
-alias CAnalyzer d2
+alias IPump d1 # for dumping
+alias HAnalyzer d2
 alias HPump d3
-alias HPump d4
-alias DumpPump d5
+alias CAnalyzer d4
+alias CPump d5
 
-define R 8.31446261815324
 define vF 1000
-define MsgReadyMsg 0
-define MsgReadyValue -1
-define MsgPTarget 1
-define MsgTTarget 2
-define MsgStart 3
+define vI 500
+define vHC 1500
 
+alias nF
+alias tF
+alias tH
+alias tC
+
+div nT 1 0
 main:
 l x db Setting
-brne x MsgPTarget 4 # receive pT
+brne x 1 4 # receive pT
 jal waitReceive
 move pT x
 jal calculateTargetMoles
-brne x MsgTTarget 4 # receive tT
+brne x 2 4 # receive tT
 jal waitReceive
 move tT x
 jal calculateTargetMoles
-bne x MsgStart main # begin mixing algorithm
-sub nRC tT tC
-mul nRC nT nRC
-sub x tF tC
-div nRC nRC x
-sub nRC nF nRC # nRC=nF-nT(tT-tC)/(tF-tC)
+bne x 3 main # begin mixing algorithm
+bgt nT 1e9 end # skip if pT/tT out of range
+
+lb nF 545937711 TotalMoles 0 # furnace moles
+lb tF 545937711 Temperature 0 # furnace temp
+l tH HAnalyzer Temperature
+l tC CAnalyzer Temperature
+
 sub nRH tT tH
 mul nRH nT nRH
 sub x tH tF
 div nRH nRH x
 sub nRH nF nRH # nRC=nF-nT(tH-tT)/(tH-tF)
+
+sub nRC tT tC
+mul nRC nT nRC
+sub x tF tC
+div nRC nRC x
+sub nRC nF nRC # nRC=nF-nT(tT-tC)/(tF-tC)
+
 max nR nRC nRH
 max nR nR 0 # nR=max(nRC,nRH,0)
+
 sub nI nT nF
 add nI nI nR # nI=nT-nF+nR
+
 mul tI tT nT
 sub x nF nR
 mul x tF x
 div tI tI nI # tI=(tT*nT-tF(nF-nR))/nI
+
 mul nH tI nI
 mul x tC nI
 sub nH nH x
 sub x tH tC
 div nH nH x # nH=(tI*nI-tC*nI)/(tH-tC)
+
 sub nC tI nH # nC=nI-nH
+
 beqz nR mix # skip if nothing to remove
 jal emptyFurnace
 l y IAnalyzer TotalMoles
-sub y y nR
-s DumpPump Setting 100 # TODO Scale this
+sub y y nR # target moles I
+dumpLoop:
 yield
-s DumpPump On 1
-l x IAnalyzer TotalMoles
-brgt x y -3
-s DumpPump On 0
+move i d(IAnalyzer)
+move v vI
+jal setPump
+bgtz x dumpLoop # loop if setting > 0
+s IPump On 0
+mix:
+l x HAnalyzer TotalMoles
+sub nH x nH # target moles H
+l x CAnalyzer TotalMoles
+sub nC x nC # target moles C
+mixLoop:
+yield
+move i d(HAnalyzer)
+move v vH
+move y nH
+jal setPump
+sgtz z # H setting > 0
+move v vC
+move y nC
+jal setPump
+sgtz x # C setting > 0
+and x x z # either > 0
+bnez x mixLoop # loop if either > 0
+s HPump On 0
+s CPump On 0
+jal fillFurnace
+end:
+s db Setting 0 # since db=3 all this time
+j main
 
 
 fillFurnace:
@@ -75,16 +116,26 @@ l x Furnace TotalMoles
 brgtz -3
 s Furnace SettingOutput 0
 j ra
+setPump: # y=target, v=volume
+l x dr(i) TotalMoles # discrete moles
+div x y x
+sub x 1 x
+mul x v x # x=(r=v(1-nt/n)) # (eq.|\ref{eq:R}|)
+add i i 1 # move to pump
+s dr(i) Setting x
+s dr(i) On 1
+add i i 1 # move to next analyzer (if any)
+j ra
 waitReceive:
-s db Setting MsgReadyValue
+s db Setting -1
 yield
 l x db Setting
-breq x MsgReadyValue -2
-s db Setting MsgReadyMsg
+breq x -1 -2
+s db Setting 0
 j ra
 calculateTargetMoles:
 mul nT pT FurnaceVolume # nT ...
-div nT nT R
+div nT nT 8.31446261815324
 div nT nT tT # ... = (pT*vT)/(R*tT)
 j ra
 mix:

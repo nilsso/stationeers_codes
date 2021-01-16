@@ -1,0 +1,8 @@
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
+\contentsline {section}{\numberline {2}Motivation}{1}{section.2}%
+\contentsline {section}{\numberline {3}Implementation and optimization}{2}{section.3}%
+\contentsline {section}{\numberline {4}Game implementation with MIPS}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Constants and utility functions}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Acquiring $p_T$ and $t_T$ }{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Calculating $n_R$, $t_I$, $n_I$, and $n_H$ }{8}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Removing $n_R$, mixing, and adding $I$ }{9}{subsection.4.4}%

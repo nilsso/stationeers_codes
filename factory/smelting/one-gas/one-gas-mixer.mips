@@ -6,31 +6,33 @@ alias HPump d3
 alias CAnalyzer d4
 alias CPump d5
 
-define vF 1000
-define vI 500
-define vHC 1500
+define FurnaceHash 545937711
+define R 8.31446261815324
 
-alias nF
-alias tF
-alias tH
-alias tC
+define vF 1000
+
+define MsgReadyMsg 0
+define MsgReadyValue -1
+define MsgPTarget 1
+define MsgTTarget 2
+define MsgStart 3
 
 div nT 1 0
 main:
 l x db Setting
-brne x 1 4 # receive pT
+brne x MsgPTarget 4 # receive pT
 jal waitReceive
 move pT x
 jal calculateTargetMoles
-brne x 2 4 # receive tT
+brne x MsgTTarget 4 # receive tT
 jal waitReceive
 move tT x
 jal calculateTargetMoles
-bne x 3 main # begin mixing algorithm
+bne x MsgStart main # begin mixing algorithm
 bgt nT 1e9 end # skip if pT/tT out of range
 
-lb nF 545937711 TotalMoles 0 # furnace moles
-lb tF 545937711 Temperature 0 # furnace temp
+lb nF FurnaceHash TotalMoles 0 # furnace moles
+lb tF FurnaceHash Temperature 0 # furnace temp
 l tH HAnalyzer Temperature
 l tC CAnalyzer Temperature
 
@@ -127,15 +129,15 @@ s dr(i) On 1
 add i i 1 # move to next analyzer (if any)
 j ra
 waitReceive:
-s db Setting -1
+s db Setting MsgReadyValue
 yield
 l x db Setting
-breq x -1 -2
-s db Setting 0
+breq x MsgReadyValue -2
+s db Setting MsgReadyMsg
 j ra
 calculateTargetMoles:
 mul nT pT FurnaceVolume # nT ...
-div nT nT 8.31446261815324
+div nT nT R
 div nT nT tT # ... = (pT*vT)/(R*tT)
 j ra
 mix:

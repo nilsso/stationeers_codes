@@ -4,6 +4,9 @@ jobs:
   build_latex:
     runs-on: ubuntu-latest
     steps:
+    - name: Where tf am I
+      run: pwd && ls -l
+      shell: bash
     - name: LaTeX compilation
       # You may pin to the exact commit or the version.
       # uses: dante-ev/latex-action@49cf7cb5f79e7b2006dbdffea85e02bec0b6244b

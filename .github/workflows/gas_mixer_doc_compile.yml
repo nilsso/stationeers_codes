@@ -10,6 +10,6 @@ jobs:
       uses: dante-ev/latex-action@2021-A
       with:
         root_file: furnace-mixer-doc-2.tex
-        working_directory: stationeers_codes/factory/smelting/gas-mixer-doc/
+        working_directory: ./factory/smelting/gas-mixer-doc/
         compiler: lualatex
         args: -interaction=nonstopmode -shell-escape

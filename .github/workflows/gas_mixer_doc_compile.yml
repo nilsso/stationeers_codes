@@ -5,5 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Where tf I am
-      run: ls -A ..
+      run: ls -A
       shell: bash

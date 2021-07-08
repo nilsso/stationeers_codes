@@ -4,6 +4,8 @@ jobs:
   build_latex:
     runs-on: ubuntu-latest
     steps:
+    - name: Set up repository
+      uses: actions/checkout@v2
     - name: Where tf I am
       run: ls -A
       shell: bash

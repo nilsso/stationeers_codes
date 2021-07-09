@@ -22,9 +22,9 @@ jobs:
         args: -interaction=nonstopmode -shell-escape
     - name: Push PDF
       run: |
-        git commit -am "Auto-recompiled furnace mixer doc"
         git config --global user.name "nilsso"
         git config --global user.email "nilso@enosis.net"
+        git commit -am "Auto-recompiled furnace mixer doc"
         git push
       
 

@@ -1,0 +1,205 @@
+\usepackage{fontspec}
+\usepackage[rgb,dvipsnames]{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage[letterpaper,margin=1.5in]{geometry}
+\usepackage[inline]{enumitem}
+%\usepackage{makecell}
+%\usepackage{tabu}
+\usepackage{multirow}
+%\usepackage{multicol}
+\usepackage{paracol}
+%\usepackage{arydshln}
+%\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{array}   % for \newcolumntype macro
+\usepackage{hyperref}
+\usepackage[backend=biber,style=alphabetic,sorting=ynt]{biblatex}
+%\usepackage{float}
+%\usepackage{endfloat}
+%\usepackage[nomarkers,figuresonly]{endfloat}
+%\usepackage[nofiglist,nomarkers]{endfloat}
+\usepackage{adjustbox}
+\usepackage{caption}
+%\usepackage[export]{adjustbox}[2011/08/13]
+%\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{thmtools}
+%\usepackage{calc}
+\usepackage{xfrac}
+\usepackage[nameinlink]{cleveref}
+\usepackage{tikz}
+\usetikzlibrary{calc,patterns,decorations.markings,arrows.meta}
+\usepackage{pgfplots}
+%\usepackage{nth}
+\usepackage{cancel}
+%\usepackage{comment}
+\usepackage{clrscode}
+\usepackage{fancyvrb}
+\usepackage{minted}
+
+% Minted/code block setup
+\setmonofont[Scale=MatchLowercase,Contextuals={Alternate}]{FuraCode Nerd Font}
+%\setminted{frame=lines,framesep=1em,fontsize=\small}
+\usemintedstyle{gruvbox-light}
+\setminted{autogobble,breaklines}
+
+% My colors
+\definecolor{colorA}{HTML}{BF4040}
+\definecolor{colorB}{HTML}{BF8040}
+\definecolor{colorC}{HTML}{4080BF}
+\definecolor{colorD}{HTML}{40BFBF}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=colorC,
+    urlcolor=colorB,
+    citecolor=colorA,
+}
+
+%\newcolumntype{C}{>{\begin{math}}c<{\end{math}}}
+%\DeclareMathOperator{\SPN}{\text{SPN}}
+
+% Colored left-bar
+\newlength{\leftbarwidth}
+\setlength{\leftbarwidth}{3pt}
+\newlength{\leftbarsep}
+\setlength{\leftbarsep}{10pt}
+\newcommand*{\leftbarcolorcmd}{\color{leftbarcolor}}
+\colorlet{leftbarcolor}{black}
+\renewenvironment{leftbar}[1][black]{%
+    \colorlet{leftbarcolor}{#1}
+    \def\FrameCommand{{\leftbarcolorcmd{\vrule width \leftbarwidth\relax\hspace {\leftbarsep}}}}%
+    \MakeFramed {\advance \hsize -\width \FrameRestore }%
+}{%
+    \endMakeFramed
+}
+
+% Theorem environments
+\theoremstyle{plain}
+\newtheorem{THM}{Theorem}
+\newtheorem*{THM*}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem*{lemma*}{Lemma}
+\newtheorem*{claim}{Claim}
+\newtheorem*{cor}{Corollary}
+\newtheorem{prop*}{Proposition}
+\newtheorem*{conj}{Conjecture}
+\theoremstyle{remark}
+\newtheorem*{example*}{Example}
+\theoremstyle{definition}
+\newtheorem*{definition*}{Definition}
+\newenvironment{thm}%
+  {\begin{leftbar}[colorA]\begin{THM}
+}{%
+  \end{THM}\end{leftbar}
+}
+\newenvironment{thm*}%
+  {\begin{leftbar}[colorA]\begin{THM*}
+}{%
+  \end{THM*}\end{leftbar}
+}
+\newenvironment{prop}%
+  {\begin{leftbar}[colorB]\begin{prop*}
+}{%
+  \end{prop*}\end{leftbar}
+}
+\newenvironment{definition}%
+  {\begin{leftbar}[colorC]\begin{definition*}
+}{%
+  \end{definition*}\end{leftbar}
+}
+\newenvironment{example}%
+  {\begin{leftbar}[colorD]\begin{example*}
+}{%
+  \end{example*}\end{leftbar}
+}
+
+% Math functions
+\newcommand{\spm}[1]{\left(\begin{smallmatrix}#1\end{smallmatrix}\right)}
+\newcommand{\gen}[1]{{\langle{#1}\rangle}}
+\newcommand{\angvec}[1]{\gen{#1}}
+\newcommand{\oldvec}[1]{\vec{#1}}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+% Math operators and symbols
+\DeclareMathOperator{\ZZ}{\mathbb{Z}}
+\DeclareMathOperator{\QQ}{\mathbb{Q}}
+\DeclareMathOperator{\NN}{\mathbb{N}}
+\DeclareMathOperator{\RR}{\mathbb{R}}
+\DeclareMathOperator{\CC}{\mathbb{C}}
+\DeclareMathOperator{\FF}{\mathbb{F}}
+\DeclareMathOperator{\calA}{{\mathcal{A}}}
+\DeclareMathOperator{\calB}{{\mathcal{B}}}
+\DeclareMathOperator{\calC}{{\mathcal{C}}}
+\DeclareMathOperator{\calD}{{\mathcal{D}}}
+\DeclareMathOperator{\calE}{{\mathcal{E}}}
+\DeclareMathOperator{\calF}{{\mathcal{F}}}
+\DeclareMathOperator{\calG}{{\mathcal{G}}}
+\DeclareMathOperator{\calH}{{\mathcal{H}}}
+\DeclareMathOperator{\calI}{{\mathcal{I}}}
+\DeclareMathOperator{\calJ}{{\mathcal{J}}}
+\DeclareMathOperator{\calK}{{\mathcal{K}}}
+\DeclareMathOperator{\calL}{{\mathcal{L}}}
+\DeclareMathOperator{\calN}{{\mathcal{N}}}
+\DeclareMathOperator{\calP}{{\mathcal{P}}}
+\DeclareMathSymbol{\sminus}{\mathbin}{AMSa}{"39}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\lcm}{lcm}
+%\DeclareMathOperator{\Pr}{\mathrm{\textbf{Pr}}}
+
+% Paired math operators
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+% Math helper functions
+\newcommand{\norm}[1]{\lVert{}#1\rVert{}}
+\newcommand{\mx}[1]{\begin{matrix}#1\end{matrix}}
+\newcommand{\bmx}[1]{\begin{bmatrix}#1\end{bmatrix}}
+\newcommand{\pmx}[1]{\begin{pmatrix}#1\end{pmatrix}}
+\newcommand{\sbmx}[1]{{\left[\begin{smallmatrix}#1\end{smallmatrix}\right]}}
+\newcommand{\spmx}[1]{{\left(\begin{smallmatrix}#1\end{smallmatrix}\right)}}
+\newcommand*\circled[3]{%
+    \tikz[baseline=(char.base)]{
+        \node[circle,draw=#1,inner sep=#2] (char) {#3};
+    }
+}
+
+% Prompt
+%\newif\ifprompts{}
+\ifprompts
+    \newenvironment{prompt}{\begin{em}\textbf{Prompt:}}{\end{em}}
+    %\newenvironment{prompt}{\begin{em}}{\end{em}}
+\else
+    \excludecomment{prompt}
+\fi
+\newcommand\pmt[1]{\begin{prompt}#1\end{prompt}}
+
+\pgfplotsset{compat=1.17}
+
+% Style
+%\renewcommand\labelitemi{\small$\bullet$}
+%\setmonofont[Scale=MatchLowercase,Contextuals={Alternate}]{FuraCode Nerd Font}
+%\setminted{frame=lines,framesep=1em,fontsize=\small}
+\setlength\parindent{0em}
+\setlength\parskip{1em}
+%\usemintedstyle{solarizedlight}
+%\renewcommand\theadalign{bc}
+%\renewcommand\theadfont{\bfseries}
+%\renewcommand\theadgape{\Gape[4pt]}
+%\renewcommand\cellgape{\Gape[4pt]}
+\newcommand\Item{\item\mbox{}}
+
+\makeatletter
+\renewenvironment{cases}[1][l]{\matrix@check\cases\env@cases{#1}}{\endarray\right.}
+\def\env@cases#1{%
+  \let\@ifnextchar\new@ifnextchar
+  \left\lbrace\def\arraystretch{1.2}%
+  \array{@{}#1@{\quad}l@{}}}
+\makeatother

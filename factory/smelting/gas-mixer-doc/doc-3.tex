@@ -140,6 +140,12 @@
 
 \begin{document}
 
+\section*{Todo}
+\begin{itemize}
+    \item Add motivations for calculation specif heat capacities and energies.
+        That is, what do these quantities mean?
+\end{itemize}
+
 \section{Introduction and Summary}
 In this section, I'll first attempt to introduce all relevant mathametical notation and gas laws,
 then attempt summarize my solutions to the proposed problem:
@@ -500,6 +506,16 @@ amount, and the temperature and number of moles of the input volume:
 \emph{This is the equation we're most interested in, as combines all the parts of the problem
 together and allows us to easily solve for either $T_I$ or $T_T$.}
 
+\subsubsection*{Bounds on temperatures}
+
+As setup in the paragraph of initial conditions, the hot source $H$ has temperature at least $T_T$
+and the cold source $C$ has temperature at most $T_T$.
+Thus we can always combine an amount from
+$H$ and an amount from $C$ into a volume $I$ such that $T_I$ equals $T_T$.
+So from this we get the bounds:
+\[
+    T_C\le T_T\le T_H,\text{ and }T_C\le T_I\le T_H.
+\]
 \begin{example}
     % (This will be more of an example of thinking about \emph{how} we can use these equations
     % to 
@@ -581,16 +597,6 @@ together and allows us to easily solve for either $T_I$ or $T_T$.}
     % \end{example}
 \end{example}
 
-\subsubsection*{Bounds on temperatures}
-
-As setup in the paragraph of initial conditions, the hot source $H$ has temperature at least $T_T$
-and the cold source $C$ has temperature at most $T_T$.
-Thus we can always combine an amount from
-$H$ and an amount from $C$ into a volume $I$ such that $T_I$ equals $T_T$.
-So from this we get the bounds:
-\[
-    T_C\le T_T\le T_H,\text{ and }T_C\le T_I\le T_H.
-\]
 
 \subsection{Calculating minimal amounts}
 

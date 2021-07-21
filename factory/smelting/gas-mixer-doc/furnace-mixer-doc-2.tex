@@ -195,7 +195,7 @@ Furthermore, equation defining the result of combining two volumes with
 different temperatures becomes significantly simpler, where specific heat
 is replaced simply by moles:
 \[
-    t_C s_C = t_A s_A+t_B t_B\
+    t_C s_C = t_A s_A+t_B s_B\
     \Rightarrow\
     t_C n_C c_{g^\ast} = t_A n_A c_{g^\ast}+t_B n_B c_{g^\ast}\
     \Rightarrow\
@@ -221,7 +221,7 @@ Several gas-law derived equations constrain this process:
 \begin{gather}
     t_T n_T = t_F(n_F-n_R)+t_I n_I \label{eq:surface} \\
     n_T = n_F-n_R+n_I \label{eq:constraint} \\
-    t_I n_I = t_H n_H+t_C n_I \label{eq:added}
+    t_I n_I = t_H n_H+t_C n_C \label{eq:added}
 \end{gather}
 Where $n_R$, $t_I$ and $n_I=n_H+n_C$ are to be determined.
 Note that each term in this system obeys some constraints:
@@ -280,7 +280,7 @@ imparts a narrower lower-bound.
 
     \begin{align*}
         t_I n_I &\le t_H n_I \\
-        t_Tn_T-t_F(n_F-n_R) &\le t_H(n_T-n_F+n_R)
+        t_T n_T-t_F(n_F-n_R) &\le t_H(n_T-n_F+n_R)
     \end{align*}
     \begin{equation}\label{eq:nRH}
         n_{R_H} = n_F-\frac{n_T(t_H-t_T)}{t_H-t_F} \le n_R
@@ -335,7 +335,7 @@ we also need to calculate $n_H$ and $n_C$,
 which is trivial given that $n_I=n_H+n_C$ and $t_I n_I=t_H n_H+t_C n_C$.
 \begin{equation}\label{eq:nC}
     \begin{aligned}[b]
-        t_I &= n_H+n_C \\
+        n_I &= n_H+n_C \\
         \Rightarrow n_C &= n_I-n_H.
     \end{aligned}
 \end{equation}

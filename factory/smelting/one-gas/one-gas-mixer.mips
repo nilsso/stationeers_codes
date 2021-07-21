@@ -111,6 +111,7 @@ l x IAnalyzer TotalMoles
 brgtz -3
 s Furnace SettingInput 0
 j ra
+
 emptyFurnace:
 yield
 s Furnace SettingOutput 100
@@ -118,6 +119,7 @@ l x Furnace TotalMoles
 brgtz -3
 s Furnace SettingOutput 0
 j ra
+
 setPump: # y=target, v=volume
 l x dr(i) TotalMoles # discrete moles
 div x y x
@@ -128,6 +130,7 @@ s dr(i) Setting x
 s dr(i) On 1
 add i i 1 # move to next analyzer (if any)
 j ra
+
 waitReceive:
 s db Setting MsgReadyValue
 yield
@@ -140,6 +143,7 @@ mul nT pT FurnaceVolume # nT ...
 div nT nT R
 div nT nT tT # ... = (pT*vT)/(R*tT)
 j ra
+
 mix:
 l x HAnalyzer TotalMoles
 l y CAnalyzer TotalMoles

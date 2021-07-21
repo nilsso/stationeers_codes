@@ -1,0 +1,365 @@
+% arara: lualatex: {shell: 1}
+\documentclass{article}
+\newif\ifprompts{}
+\promptstrue{}
+\input{$HOME/Dropbox/Documents/TeX/math-pre.tex}
+\setlist{
+   itemsep=0em,
+   %first={\setlength{\parskip}{1em}}
+}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0.5em}
+% \newenvironment{code}{\captionsetup{type=listing}}{}
+% \newcommand{\colorA}{RoyalBlue}
+% \newcommand{\colorB}{PineGreen}
+% \newcommand{\colorC}{OrangeRed}
+% \addbibresource{references.bib}
+
+\DeclareMathOperator{\moles}{\mathrm{mol}}
+\DeclareMathOperator{\Hyd}{\mathrm{H}_2}
+\DeclareMathOperator{\Nit}{\mathrm{N}_2}
+\DeclareMathOperator{\Ox}{\mathrm{O}_2}
+\DeclareMathOperator{\Pol}{\mathrm{X}}
+\DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
+\DeclareMathOperator{\Water}{\mathrm{H}_2\mathrm{O}}
+\DeclareMathOperator{\NiOx}{\mathrm{N}_2\mathrm{O}}
+
+\begin{document}
+
+\section{Introduction and Summary}
+In this section, I'll first attempt to introduce all relevant mathametical notation and gas laws,
+then attempt summarize my solutions to the proposed problem:
+
+\begin{quote}
+    \begin{itshape}
+        Given a furnace $F$ containing only $\CDiox$ at some arbitrary initial conditions, a source
+        $H$ of relatively hot $\CDiox$ and a source $C$ of relatively cold $\CDiox$, is there not
+        only some way of constructing a mixture of $H$ and $C$ such that inserting it into $F$
+        (possibly after removing from initial gas from $F$) yields exactly some target temperature
+        and pressure in $F$, but a way in which minimizes how much from $H$ and $C$ we need to add?
+    \end{itshape}
+\end{quote}
+
+\subsection{Notation}
+
+Firstly, I'll often write a closed mixture/volume of gasses as a single capital letter, like $F$ for
+furnace, and where now $F$ symbolically refers to all the conditions of the furnace. Formally:
+\begin{definition}[$M$ a gas mixture]
+    Let $M$ be a ``mixture/volume'' of gasses; we write:
+    \begin{itemize}
+        \item $V_M$ for the total volume in liters of the system in which the mixture is contained,
+        \item $n_M$ for the total number of moles in the mixture,
+        \item $T_M$ for the temperature of the mixture,
+        \item $P_M$ for the total pressure in kilopascals, and
+        \item $C_M$ for the specific heat of the mixture.
+    \end{itemize}
+\end{definition}
+Secondly, there are seven types of gasses in the game, each with a formula. I use the formulas as
+\emph{indices} for the gasses. That is, if I say \emph{the gas $g$}, then what I mean is \emph{the
+gas indexed by $g$, an element of the set of gas indices}.
+\begin{definition}[$g$ a gas index]
+    The set of gas indicies for Stationeers:
+    \[
+        \calG = \{\Hyd,\Nit,\Ox,\Pol,\CDiox,\Water,\NiOx\}.
+    \]
+    We assume that the order of these indices is always the same;
+    that is, the first element of $\calG$ is always $\Hyd$, the second is always $\Nit$, and so on.
+
+    Let $M$ be a mixture of the gasses indexed by the elements of $\calG$, and
+    let $g\in\calG$ (read, $g$ is an element of $\calG\Leftrightarrow g=\Hyd$, or $\Nit$,\ \ldots, or $\NiOx$).
+    Then we write:
+    \begin{itemize}
+        \item $n_M(g)$ for the moles of $g$ (the gas indexed by $g$) within mixture $M$,
+        \item $P_M(g)$ for the partial pressure of $g$ within mixture $M$, and
+        \item $C_g$ the \href{https://en.wikipedia.org/wiki/Specific_heat_capacity}{specific heat
+            (capacity)} of a gas $g$.
+    \end{itemize}
+\end{definition}
+(See see \autoref{fig:gas-table} for a table of the gasses in Stationeers, their $g$
+formulas/indices, and their $C_g$ specific heats.)
+\begin{figure}
+    \begin{center}
+        \begin{tabular}{*3l}
+            \toprule
+            Name & Formula ($g$) & Specific heat ($C_g$) \\
+            \midrule
+            Hydrogen & $\Hyd$ & 20.4 \\
+            Nitrogen & $\Nit$ & 20.6 \\
+            Oxygen & $\Ox$ & 21.1 \\
+            Pollutant & $\Pol$ & 24.8 \\
+            Carbon dioxide & $\CDiox$ & 28.2 \\
+            Water & $\Water$ & 72 \\
+            Nitrous oxide & $\NiOx$ & 23 \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Table of gasses in Stationeers}
+    \label{fig:gas-table}
+\end{figure}
+
+All but the last of these conditions can be determined without much calculation; in particular $n_M$
+the total moles, $T_M$ temperature and $P_M$ pressure can all be read directly from a furnace/pipe
+analyzer/tank in game, and $n_M(g)$ moles of the particular gas $g$ can be calculated simply as the
+ratio of the gas times the total moles:
+\[
+    n_M(g) = \text{(ratio of $g$ in $M$)}\cdot n_M,
+    \text{ where } 0 \le \text{ratio of $g$ in $M$} \le 1.
+\]
+Note that if $M$ consists of only one kind of gas (which I index as $g^*$):
+\[
+    \text{if } 1 = \text{(ratio of $g^*$ in $M$)}
+    \Rightarrow
+    n_M(g^*) = 1\cdot n_M = n_M.
+\]
+
+\subsection{Gas laws}
+
+Gasses in Stationeers obey some of the ideal gas laws from real life.
+First, lets know how to calculate the specific heat of a mixture of gasses.
+Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\autoref{fig:gas-table}).
+\begin{definition}[Specific heat capacity of a gas mixture]
+    Let $M$ be a mixture of the $\calG$ gasses. The specific heat of the mixture ($C_M$) is given by
+    the sum of the products of the molar ratios of the gasses in the mixtures and their respective
+    specific heats. We can notate this mathematically in a few ways:
+    \[
+        C_M
+        = \frac{n_M(\Hyd)}{n_M}C_{\Hyd}
+        + \frac{n_M(\Nit)}{n_M}C_{\Nit}
+        + \cdots
+        + = \frac{n_M(\NiOx)}{n_M}C_{\NiOx}
+        = \sum_{g\in\calG} \frac{n_M(g)}{n_M}C_g
+    \]
+    Or as the dot-product $\cdot$ of vectors:
+    \begin{equation}
+        C_M = (\vec{n}_M \cdot \vec{C}_{\calG})\frac{1}{n_M}
+    \end{equation}
+    Where $\vec{n}_M$ is the vector of the moles per gas in $M$, and
+    where $\vec{C}_{\calG}$ is the vector of the specific heats of each gas:
+    \begin{align*}
+        \vec{n}_M
+        &= \angvec{n_M(\Hyd),n_M(\Nit),\ldots,n_M(\NiOx)}
+        = \angvec{n_M(g):g\in\calG} \\
+        \vec{C}_{\calG}
+        &= \angvec{C_{\Hyd},C_{\Nit},\ldots,C_{\NiOx}}
+        = \angvec{C_g:g\in\calG}.
+    \end{align*}
+\end{definition}
+Note that if $M$ consists of only one kind of gas $g^*$, then the ratio of $g^*\in\calG$ is $M$ is one
+(as noted before), and the ratio of $g\in\calG\setminus g^*$ in $M$ is zero.
+(We read $g\in \calG\setminus g^*$ as: $g$ is an element of the set $\calG\setminus g^*$,
+where $\calG\setminus g^*$ is the set $\calG$ but with the $g^*$ element removed.)
+\begin{example}
+    Suppose $F$ our furnace contains 10 moles of each kind of gas, of which there are seven.
+
+    Then $n_F=70$, and:
+    \begin{align*}
+        C_F
+        = \sum_{g\in\calG}\frac{n_F(g)}{n_F}C_g
+        &= \frac{n_F(\Hyd)}{n_F}C_{\Hyd}+\frac{n_F(\Nit)}{n_F}C_{\Nit}+\cdots+\frac{n_F(\NiOx)}{n_F}C_{\NiOx} \\
+        &= \frac{10}{70}\left(20.4 + 20.6 + 21.1 + 24.8 + 28.2 + 72 + 23\right)
+        = 30.01
+    \end{align*}
+\end{example}
+\begin{example}
+    Suppose $F$ our furnace contains 70 moles of only $g^*=\CDiox$.
+
+    Then $n_F=n_F(\CDiox)=70$, and:
+    \begin{gather*}
+        n_F(g) = \begin{cases}
+            n_F(g) = n_F, & \text{if } g = \CDiox \\
+            n_F(g) = 0, & \text{if } g \ne \CDiox \\
+        \end{cases}, \\
+        \begin{aligned}
+            C_F
+            &= \left(\vec{n}_F \cdot \vec{C}_{\calG}\right)\frac{1}{n_F} \\
+            &=
+            \left((0,0,0,0,70,0,0)
+            \cdot
+            (C_{\Hyd},C_{\Nit},C_{\Ox},C_{\Pol},C_{\CDiox},C_{\Water},C_{\NiOx})\right)
+            \frac{1}{70}
+            \\
+            &= (70\cdot C_{\CDiox})\frac{1}{70} = C_{\CDiox}
+        \end{aligned}
+    \end{gather*}
+\end{example}
+This reduction of a volume's specific heat to a constant is one reason why I prefer a single gas
+($\CDiox$) design; it reduces many of the later problems from problems of differential equations to
+simple problems of algebra. The other reason is that $\CDiox$ is plentiful, both as at atmospheric
+gas on planets like Mars and Venus and as a byproduct of combustion.
+
+In terms of gas laws, the model in Stationeers obeys the following laws for a fixed volume of gas.
+
+\begin{definition}[Gay-Lussac's law]
+    \begin{equation}
+        P_1 T_2=P_2 T_1
+        \label{eq:gay-lussac}
+    \end{equation}
+    Change in pressure is directly proportional to change in temperature.
+\end{definition}
+\textbf{Note!} This law is only \emph{half}-obeyed! In game, changing the temperature in a
+fixed volume expectedly affects the pressure proportionally, but not vice-versa. That is:
+removing gas, i.e. ``lowering its pressure'', does \emph{not} change its temperature.
+
+\begin{definition}[Ideal/combined gas law]
+    \begin{equation}
+        PV=nRT
+        \label{eq:ideal}
+    \end{equation}
+    Where $R=8.314$ (joules per mole kelvin)
+    is the \href{https://en.wikipedia.org/wiki/Gas_constant}{universal gas constant}.
+\end{definition}
+
+\begin{definition}[Dalton's law of partial pressures]
+    \begin{equation}
+        P
+        = P(\Hyd)+P(\Nit)+P(\Ox)+P(\Pol)+P(\CDiox)+P(\Water)+P(\NiOx)
+        = \sum_{g\in\calG}P(g)
+        \label{eq:partial-p}
+    \end{equation}
+    The pressure in the volume is the sum of partial pressures of the constituent gasses.
+\end{definition}
+
+\begin{definition}[Energy of a volume gas]
+    The energy of a volume of gas with temperature $T$, number of moles $n$, and
+    (combined) specific heat $C$ is given by $TnC$.
+\end{definition}
+
+Furthermore, the game model satisfies these other equations.
+Given volumes $A$ and $B$, and $C$ the result of combining $A$ and $B$:
+\begin{flalign}
+    &n_C = n_A + n_B &
+    &\text{(moles are additive)} & \label{eq:n-combine} \\
+    &C_C = \left((\vec{n}_A+\vec{n}_B)\cdot\vec{C}_{\calG}\right)\frac{1}{n_C} &
+    &\text{(combined specific heat)} & \label{eq:C-combine} \\
+    &T_C n_C C_C = T_A n_A C_A+T_B n_B C_B &
+    &\text{(combined energies)} & \label{eq:energy-combine}
+\end{flalign}
+With all this notation and all these gas equations in mind,
+we move onto solving the proposed problem.
+
+\subsection{Summary}
+
+Drafting up the scenario:
+
+\emph{(Initial conditions)}
+A furnace already contains some amount of ``hot'' $\CDiox$ as a starter. We add the reagents for
+some alloy, releasing some other gasses into the furnace mix. We then filter out all gases except
+for the $\CDiox$, returning the $\CDiox$ back into the furnace, leaving the furnace with only
+$\CDiox$ gas but also the reagents for the alloy. For the alloy we require some specific
+temperature, $T_T$ (target temperature), and pressure, $P_T$ (target pressure); we'll consider these
+to be the minimum of whatever the alloy ranges are. Lastly, we have $H$ the ``hot'' source of
+$\CDiox$ that has temperature $T_H$ of \emph{at least} $T_T$ kelvin, and have $C$ the ``cold''
+source of $\CDiox$ that's \emph{at most} $T_T$ kelvin.
+
+\emph{(The question now)}
+How much of the furnace $\CDiox$ do we need to remove (if any) in order for
+it to be possible to compose a \emph{minimal} combination $I$ of $\CDiox$ from the $H$ and $C$
+sources, that when added to $F$ achieves $T_T$ and $P_T$ in the furnace.
+
+\begin{figure}
+    \begin{center}
+        \begin{tabular}{cl}
+            \toprule
+            Volume & Description \\
+            \midrule
+            $F$   & The initial furnace volume \\
+            $T$   & The target furnace volume \\
+            $R$   & The volume removed from the initial \\
+            $I$   & The input volume \\
+            $H$   & The hot source \\
+            $C$   & The cold source \\
+            \bottomrule
+        \end{tabular}
+        \vspace{1em}
+
+        \begin{tabular}{l*6c}
+            \toprule
+                           & Initial & Target & Removed & Input & Hot   & Cold  \\
+            \midrule                                           
+            Pressure       & $P_F$   & $P_T$  & ---     & ---   & ---   & ---   \\
+            Temperature    & $T_F$   & $T_T$  & ---     & $T_I$ & $T_H$ & $T_C$ \\
+            Moles $\CDiox$ & $n_F$   & $n_T$  & $n_R$   & $n_I$ & $n_H$ & $n_C$ \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    \caption{Table of variables which we will encounter.}
+    \label{fig:var-table}
+\end{figure}
+
+There will be many variables in the following work (see \autoref{fig:var-table} for descriptions for
+all of the variables we will be encountering---note that I use \emph{volume}, \emph{mixture} and
+\emph{composition} somewhat interchangeably when talking about some specific closed amount of gas,
+and that volume here has nothing to do with the actual volume of the container in which the closed
+amount of gas sits); we'll first lay out the relationships between
+these different variables with respect to the laws and equations defined above. We will use these
+relationships to establish a system of equations.
+
+\begin{itemize}
+    \item Firstly, consider \autoref{eq:C-combine} for some volumes $A$, $B$ and $C$ of \emph{only}
+        $\CDiox$, and where $C$ is the combination of $A$ and $B$. Then:
+        \[
+            C_C
+            = \big((\vec{n}_A+\vec{n}_B)\cdot\vec{C}_{\calG}\big)\frac{1}{n_C}
+            = (n_A(\CDiox)+n_B(\CDiox))C_{\CDiox}\frac{1}{n_C}
+            = n_C C_{\CDiox}\frac{1}{n_C}
+            = C_{\CDiox}.
+        \]
+        As well as $C_A=C_B=C_C=C_{\CDiox}$. Then \autoref{eq:energy-combine} can be simplified:
+        \begin{alignat}{4}
+            &\phantom{\Rightarrow} &
+            &\ T_C n_C C_C &
+            \ = &\ T_A n_A C_A & &+\ T_B n_B C_B \notag \\
+            &\Rightarrow &
+            &\ T_C n_C C_{\CDiox} &
+            \ = &\ T_A n_A C_{\CDiox} & &+\ T_B n_B C_{\CDiox} \notag \\
+            &\Rightarrow &
+            &\ T_C n_C &
+            \ = &\ T_A n_A & &+\ T_B n_B.
+            \label{eq:T-combine}
+        \end{alignat}
+        And this is all we need for a one-gas, $\CDiox$ system.
+
+    \item Consider that an amount of moles cannot be negative, $0\le n_M$, and that we can
+        only remove as many moles as there are there initially, though we might remove none at all.
+        This imposes a restriction on $n_R$:
+        \[
+            0 \le n_R \le n_F.
+        \]
+
+    \item When we have theoretically reached our ideal target pressure and temperature, we will have
+        removed some amount of moles $n_R$ from the initial amount $n_F$ in the furnace $F$, and
+        will have input some amount of moles $n_I$ into the furnace. The number of moles $n_I$ of
+        the input volume $I$ is a function of $n_H$, some number of moles from the hot source, and
+        $n_C$, some number of moles from cold source, that must satisfy \autoref{eq:n-combine}:
+        \[
+            n_I = n_H + n_C.
+        \]
+        The number of moles at the theoretical target must also satisfy this equation:
+        \begin{align*}
+            n_T
+            &= (n_F-n_R)+n_I \\
+            &= (n_F-n_R)+(n_H + n_C).
+        \end{align*}
+
+    \item
+        The temperature and number of moles for the input volume is a function of the temperature
+        and number of moles from the hot and cold sources and must satisfy equation
+        \autoref{eq:T-combine}:
+        \[
+            T_I n_I = T_H n_H + T_C n_C.
+        \]
+        Similarly, the temperature and number of moles for the target is a function of the initial
+        temperature in the furnace, the number of moles remaining in the furnace after having
+        removed some amount, and the temperature and number of moles of the input volume:
+        \begin{align*}
+            T_T n_T
+            &= T_F(n_F-n_R)+T_I n_I \\
+            &= T_F(n_F-n_R)+(T_H n_H+T_C n_C).
+        \end{align*}
+\end{itemize}
+
+% \autoref{eq:C-combine}
+% \autoref{eq:T-combine}
+
+% Our goal: 
+\end{document}

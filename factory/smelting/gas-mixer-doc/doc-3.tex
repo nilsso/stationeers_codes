@@ -2,7 +2,8 @@
 \documentclass{article}
 \newif\ifprompts{}
 \promptstrue{}
-\input{math-pre.tex}
+% \input{math-pre.tex}
+\input{$HOME/Dropbox/Documents/TeX/math-pre.tex}
 \setlist{
    itemsep=0em,
    %first={\setlength{\parskip}{1em}}
@@ -23,6 +24,119 @@
 \DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
 \DeclareMathOperator{\Water}{\mathrm{H}_2\mathrm{O}}
 \DeclareMathOperator{\NiOx}{\mathrm{N}_2\mathrm{O}}
+
+\newcommand\pgfmathparseFPU[1]{
+    \begingroup%
+        \pgfkeys{/pgf/fpu,/pgf/fpu/output format=fixed}
+        \pgfmathparse{#1}
+        \pgfmathsmuggle\pgfmathresult
+    \endgroup
+}
+% \def\GasConstant{8.314}
+% \def\vF{1000}
+% \def\tC{230}
+% \def\tH{2300}
+\newcommand{\setupparams}[6]{%
+    \pgfmathsetmacro{\GasConstant}{8.314}
+    \pgfmathsetmacro{\vF}{1000}
+    \pgfmathsetmacro{\pF}{#1}
+    \pgfmathsetmacro{\tF}{#2}
+    \pgfmathparseFPU{\pF/\tF*\vF/\GasConstant)}\pgfmathsetmacro{\nF}{\pgfmathresult}
+    \pgfmathsetmacro{\pT}{#3}
+    \pgfmathsetmacro{\tT}{#4}
+    \pgfmathparseFPU{\pT/\tT*\vF/\GasConstant)}\pgfmathsetmacro{\nT}{\pgfmathresult}
+    \pgfmathsetmacro{\tC}{#5}
+    \pgfmathsetmacro{\tH}{#6}
+    \pgfmathsetmacro{\rG}{0}
+    \pgfmathparseFPU{\nF-(\nT*(\tT-\tH))/(\tF-\tH)}\pgfmathsetmacro{\rR}{\pgfmathresult}
+    \pgfmathparseFPU{\nF-(\nT*(\tT-\tC))/(\tF-\tC)}\pgfmathsetmacro{\rB}{\pgfmathresult}
+}
+\newcommand{\surf}{%
+    \addplot3[%
+        surf,
+        samples=25,
+        samples y=25,
+        opacity=0.5,
+        domain=0:\nF,
+        domain y=\tC:\tH,
+        variable=\nR,
+    ]
+    {(\tT*\nT-\tF*(\nF-\nR))/y};
+}
+\newcommand{\curve}{%
+    \addplot3[%
+        thick,
+        color=red,
+        samples=30,
+        samples y=0,
+        domain={max(\rG, max(\rR, \rB))}:\nF,
+        domain y=\tC:\tH,
+        variable=\nR,
+    ]
+    ({\nR},{(\tT*\nT-\tF*(\nF-\nR))/(\nT-\nF+\nR)},{\nT-\nF+\nR});
+}
+\newcommand{\Surf}[7][1.0]{%
+    \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
+    \begin{tikzpicture}[scale=#1]
+        \begin{axis}[
+                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
+                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                view={-135}{45},
+                ymin=\tC, ymax=\tH,
+                zmin=0,
+            ]
+            \surf%
+        \end{axis}
+    \end{tikzpicture}
+}
+\newcommand{\Curve}[7][1.0]{%
+    \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
+    \begin{tikzpicture}[scale=#1]
+        \begin{axis}[
+                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
+                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                view={-135}{45},
+                ymin=\tC,ymax=\tH,
+                zmin=0,
+            ]
+            \surf%
+            \curve%
+        \end{axis}
+    \end{tikzpicture}
+}
+\newcommand{\Full}[7][1.0]{%
+    \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
+    \begin{tikzpicture}[scale=#1]
+        \begin{axis}[
+                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
+                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                view={-135}{45},
+                ymin=\tC, ymax=\tH,
+                zmin=0,
+            ]
+            \surf%
+            \curve%
+            \filldraw[green]
+            (
+                {\rG},
+                {(\tT*\nT-\tF*\nF)/(\nT-\nF)},
+                {\nT-\nF}
+            ) circle (2pt) node {};
+            \filldraw[red]
+            (
+                {\rR},
+                {\tH},
+                {\nT-(\nT*(\tT-\tH))/(\tF-\tH)}
+            ) circle (2pt) node {};
+            \filldraw[blue]
+            (
+                {\rB},
+                {\tC},
+                {\nT-(\nT*(\tT-\tC))/(\tF-\tC)}
+            ) circle (2pt) node {};
+        \end{axis}
+    \end{tikzpicture}
+}
 
 \begin{document}
 
@@ -294,69 +408,229 @@ amount of gas sits); we'll first lay out the relationships between
 these different variables with respect to the laws and equations defined above. We will use these
 relationships to establish a system of equations.
 
-\begin{itemize}
-    \item Firstly, consider \autoref{eq:C-combine} for some volumes $A$, $B$ and $C$ of \emph{only}
-        $\CDiox$, and where $C$ is the combination of $A$ and $B$. Then:
-        \[
-            C_C
-            = \big((\vec{n}_A+\vec{n}_B)\cdot\vec{C}_{\calG}\big)\frac{1}{n_C}
-            = (n_A(\CDiox)+n_B(\CDiox))C_{\CDiox}\frac{1}{n_C}
-            = n_C C_{\CDiox}\frac{1}{n_C}
-            = C_{\CDiox}.
-        \]
-        As well as $C_A=C_B=C_C=C_{\CDiox}$. Then \autoref{eq:energy-combine} can be simplified:
-        \begin{alignat}{4}
-            &\phantom{\Rightarrow} &
-            &\ T_C n_C C_C &
-            \ = &\ T_A n_A C_A & &+\ T_B n_B C_B \notag \\
-            &\Rightarrow &
-            &\ T_C n_C C_{\CDiox} &
-            \ = &\ T_A n_A C_{\CDiox} & &+\ T_B n_B C_{\CDiox} \notag \\
-            &\Rightarrow &
-            &\ T_C n_C &
-            \ = &\ T_A n_A & &+\ T_B n_B.
-            \label{eq:T-combine}
-        \end{alignat}
-        And this is all we need for a one-gas, $\CDiox$ system.
+\subsubsection*{Calculating target moles}
 
-    \item Consider that an amount of moles cannot be negative, $0\le n_M$, and that we can
-        only remove as many moles as there are there initially, though we might remove none at all.
-        This imposes a restriction on $n_R$:
-        \[
-            0 \le n_R \le n_F.
-        \]
+Given that $P_T$ and $T_T$ are our fixed targets, we can use the ideal gas law (\autoref{eq:ideal})
+to solve for $n_T$ the target moles we will need. From the game we know the volume of a furnace
+$V_F$ to be 1,000 liters, and $R$ the universal gas constant is $8.314$ joules per mole kelvin (and
+note that $1\ \text{kPa}=1\ \sfrac{\text{J}}{\text{m}^3}=1\ \sfrac{\text{J}}{\text{L}}$). Then:
+\begin{align}
+    P_T\ \sfrac{\text{J}}{\text{L}}\cdot V_F\ \text{L}
+    &= n_T\ \text{mol}\cdot R\ \sfrac{\text{J}}{\text{mol}\ \text{K}}\cdot T_T\ \text{K} \notag \\
+    \Rightarrow
+    n_T\ \text{mol}
+    &= \frac
+        {P_T\ \sfrac{\text{J}}{\text{L}}\cdot V_F\ \text{L}}
+        {R\ \sfrac{\text{J}}{\text{mol}\ \text{K}}\cdot T_T\ \text{K}}
+    = \frac{P_T\cdot V_F}{R\cdot T_T}\text{mol}
+\end{align}
 
-    \item When we have theoretically reached our ideal target pressure and temperature, we will have
-        removed some amount of moles $n_R$ from the initial amount $n_F$ in the furnace $F$, and
-        will have input some amount of moles $n_I$ into the furnace. The number of moles $n_I$ of
-        the input volume $I$ is a function of $n_H$, some number of moles from the hot source, and
-        $n_C$, some number of moles from cold source, that must satisfy \autoref{eq:n-combine}:
-        \[
-            n_I = n_H + n_C.
-        \]
-        The number of moles at the theoretical target must also satisfy this equation:
-        \begin{align*}
-            n_T
-            &= (n_F-n_R)+n_I \\
-            &= (n_F-n_R)+(n_H + n_C).
-        \end{align*}
+\subsubsection*{Simplifying energy equations (\autoref{eq:C-combine} and \autoref{eq:energy-combine})}
 
-    \item
-        The temperature and number of moles for the input volume is a function of the temperature
-        and number of moles from the hot and cold sources and must satisfy equation
-        \autoref{eq:T-combine}:
-        \[
-            T_I n_I = T_H n_H + T_C n_C.
-        \]
-        Similarly, the temperature and number of moles for the target is a function of the initial
-        temperature in the furnace, the number of moles remaining in the furnace after having
-        removed some amount, and the temperature and number of moles of the input volume:
-        \begin{align*}
-            T_T n_T
-            &= T_F(n_F-n_R)+T_I n_I \\
-            &= T_F(n_F-n_R)+(T_H n_H+T_C n_C).
-        \end{align*}
-\end{itemize}
+Firstly, consider \autoref{eq:C-combine} for some volumes $A$, $B$ and $C$ of \emph{only} $\CDiox$,
+and where $C$ is the combination of $A$ and $B$. Then:
+\[
+    C_C
+    = \big((\vec{n}_A+\vec{n}_B)\cdot\vec{C}_{\calG}\big)\frac{1}{n_C}
+    = (n_A(\CDiox)+n_B(\CDiox))C_{\CDiox}\frac{1}{n_C}
+    = n_C C_{\CDiox}\frac{1}{n_C}
+    = C_{\CDiox}.
+\]
+As well as $C_A=C_B=C_C=C_{\CDiox}$. Then \autoref{eq:energy-combine} can be simplified:
+\begin{alignat}{4}
+    &\phantom{\Rightarrow} &
+    &\ T_C n_C C_C &
+    \ = &\ T_A n_A C_A & &+\ T_B n_B C_B \notag \\
+    &\Rightarrow &
+    &\ T_C n_C C_{\CDiox} &
+    \ = &\ T_A n_A C_{\CDiox} & &+\ T_B n_B C_{\CDiox} \notag \\
+    &\Rightarrow &
+    &\ T_C n_C &
+    \ = &\ T_A n_A & &+\ T_B n_B.
+    \label{eq:T-combine}
+\end{alignat}
+And this is all we need for a one-gas, $\CDiox$ system.
+
+\subsubsection*{Bounds on moles}
+
+Consider that an amount of moles cannot be negative, $0\le n_M$, and that we can only remove as many
+moles as there are there initially, though we might remove none at all. This imposes a restriction
+on $n_R$:
+\[
+    0 \le n_R \le n_F.
+\]
+
+\subsubsection*{Combinations of moles (applying \autoref{eq:n-combine})}
+
+When we have theoretically reached our ideal target pressure and temperature, we will have removed
+some amount of moles $n_R$ from the initial amount $n_F$ in the furnace $F$, and will have input
+some amount of moles $n_I$ into the furnace. The number of moles $n_I$ of the input volume $I$ is a
+function of $n_H$, some number of moles from the hot source, and $n_C$, some number of moles from
+cold source, that must satisfy \autoref{eq:n-combine}:
+\begin{equation}
+    n_I = n_H + n_C.
+    \label{eq:n-combine-model}
+\end{equation}
+The number of moles at the theoretical target must also satisfy this equation:
+\begin{align*}
+    n_T
+    &= (n_F-n_R)+n_I \\
+    \intertext{(Substituting \autoref{eq:n-combine-model})}
+    &= (n_F-n_R)+(n_H + n_C).
+\end{align*}
+
+\subsubsection*{Combinations of energies (applying \autoref{eq:T-combine})}
+
+The temperature and number of moles for the input volume is a function of the temperature and number
+of moles from the hot and cold sources and must satisfy equation
+\autoref{eq:T-combine}:
+\begin{equation}
+    T_I n_I = T_H n_H + T_C n_C.
+    \label{eq:T-combine-model}
+\end{equation}
+Similarly, the temperature and number of moles for the target is a function of the initial
+temperature in the furnace, the number of moles remaining in the furnace after having removed some
+amount, and the temperature and number of moles of the input volume:
+\begin{align}
+    T_T n_T
+    &= T_F(n_F-n_R)+T_I n_I \label{eq:T-combine-model-2} \\
+    \intertext{(Substituting \autoref{eq:T-combine-model})}
+    &= T_F(n_F-n_R)+(T_H n_H+T_C n_C). \label{eq:T-combine-model-3}
+\end{align}
+\emph{This is the equation we're most interested in, as combines all the parts of the problem
+together and allows us to easily solve for either $T_I$ or $T_T$.}
+
+\begin{example}
+    % (This will be more of an example of thinking about \emph{how} we can use these equations
+    % to 
+    Suppose we have initial conditions $T_F=500$, $P_F=1000$, $T_C=200$ and $T_H=2500$,
+    but we don't have a particular target pressure $P_T$ or temperature $T_T$;
+    we just want to see how things change as we remove some amount $n_R$ from $F$,
+    add some amount $n_H$ from $H$ into $F$,
+    and/or add some amount $n_C$ from $C$ into $F$.
+
+    Lets call $T_E$, $P_E$ and $n_E$ our end results: the temperature, pressure and number
+    of moles after having removed $n_R$ and having added $n_I$.
+    Our procedure is this: pick values for $n_R$, $n_H$ and $n_C$,
+    \begin{enumerate*}[label=(\alph*)]
+        \item calculate $n_E=(n_F-n_R)+n_I$ where $n_I=n_H+n_C$,
+        \item calculate $T_E$ by solving \autoref{eq:T-combine-model-3} for $T_E$, and then
+        \item calculate $P_E$ by solving \autoref{eq:ideal} for $P_E$.
+    \end{enumerate*}
+
+    First we need to calculate $n_F$, the initial amount of moles in the furnace, using
+    \autoref{eq:ideal} (recall that $V_F=1000$ and $R=8.314$):
+    \[
+        n_F
+        = \frac{P_F\cdot V_F}{R\cdot T_F}
+        = \frac{1000\cdot 1000}{8.314\cdot 500}
+        \doteq 240.56 \text{ moles $\CDiox$}.
+    \]
+    (Alternatively, since this is Stationeers we're talking about, we would have been able to
+    find this value just by reading the number of moles from the furnace:
+    \mintinline{text}{l nF furnace TotalMoles}.)
+    \begin{example}[$n_R=100$, $n_H=200$ and $n_C=0$]
+        \phantom{ }
+        \begin{enumerate}[label=(\alph*)]
+            \item
+                \begin{math}
+                    n_E=(240.56-100)+(200+0)=340.56
+                \end{math}
+            \item
+                \begin{math}
+                    \begin{aligned}[t]
+                        T_E
+                        &= (T_F(n_F-n_R)+(T_H n_H+T_C n_C))/n_E \\
+                        &= (500\cdot 140.56+(2500\cdot 200+200\cdot 0))/340.56
+                        \doteq 1674.54\text{ K}.
+                    \end{aligned}
+                \end{math}
+            \item
+                \begin{math}
+                    \begin{aligned}[t]
+                        P_E
+                        &= (n_E\cdot R\cdot T_E)/V_F \\
+                        &= (340.56\cdot 8.314\cdot 1674.54)/1000
+                        \doteq 4741.32\text{ kPa}.
+                    \end{aligned}
+                \end{math}
+        \end{enumerate}
+    \end{example}
+    % \begin{example}[$n_R=0$, $n_N=0$, and $n_C=300$]
+    %     \phantom{ }
+    %     \begin{enumerate}[label=(\alph*)]
+    %         \item
+    %             \begin{math}
+    %                 n_E=(240.56-0)+(0+300)=540.56
+    %             \end{math}
+    %         \item
+    %             \begin{math}
+    %                 T_E
+    %                 % = (T_F(n_F-n_R)+(T_H n_H+T_C n_C))/n_E
+    %                 = (500\cdot 240.56+(2500\cdot 0+200\cdot 300))/540.56
+    %                 \doteq 1674.54\text{ K}.
+    %             \end{math}
+    %         \item
+    %             \begin{math}
+    %                 P_E
+    %                 % = (n_E\cdot R\cdot T_E)/V_F
+    %                 = (340.56\cdot 8.314\cdot 1674.54)/1000
+    %                 \doteq 4741.32\text{ kPa}.
+    %             \end{math}
+    %     \end{enumerate}
+    % \end{example}
+\end{example}
+
+\subsubsection*{Bounds on temperatures}
+
+As setup in the paragraph of initial conditions, the hot source $H$ has temperature at least $T_T$
+and the cold source $C$ has temperature at most $T_T$.
+Thus we can always combine an amount from
+$H$ and an amount from $C$ into a volume $I$ such that $T_I$ equals $T_T$.
+So from this we get the bounds:
+\[
+    T_C\le T_T\le T_H,\text{ and }T_C\le T_I\le T_H.
+\]
+
+\subsection{Calculating minimal amounts}
+
+We have enough bounds here to establish a system of equations with which we can solve the problem;
+that is to be able to solve for a minimal amounts $n_R$ to remove, $n_H$ of $H$ to add and $n_C$ of
+$C$ to add. It will be a matter of solving these equations for particular variables, and applying
+certain metrics to solve for these minimal values.
+
+First, solve \autoref{eq:T-combine-model-2} for $n_I$. This yields $n_I$ as a function of $n_R$ and
+$T_I$; the remaining variables ($T_T$, $n_T$, $T_F$ and $n_F$) are all fixed:
+\begin{equation}
+    f(n_R,T_I) = n_I = \frac{T_T n_T+T_F(n_F-n_R)}{T_I}.
+    \label{eq:surf}
+\end{equation}
+We can plot this function $f$, being of two variables $n_R$ and $T_I$, in three dimensions using the
+bounds on $T_I$ and $n_R$: that $T_C\le T_I\le T_H$ and $0\le n_R\le n_F$. \autoref{fig:surfaces}
+visualizes this bounded surface for a few different initial conditions (in all cases I chose
+$T_C=200$ and $T_H=2500$). What this shows us is that any point $\big(n_R,T_I,f\big)$ (where $f$ is
+shorthand for $f(n_R,T_I)$) on the surface satisfies \autoref{eq:surf}.
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.32\textwidth}
+            \Surf[.5]{4000}{500}{9000}{700}{200}{2500}
+        \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+            \Surf[.5]{6000}{600}{5000}{800}{200}{2500} % red example
+        \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+            \Surf[.5]{15000}{900}{6000}{600}{200}{2500} % blue example
+        \end{subfigure}
+        \caption{The surface defined by $(n_R,T_I,f)$ for various initial conditions.}
+        \label{fig:surfaces}
+    \end{center}
+    % \caption[]{%
+    %     The $(n_R,t_I,f)$ solution surface
+    %     and $(n_R,h,g)$ embedded curve.
+    % }
+    % \caption{Surface defined by $f:
+    % \label{fig:plot-1}
+\end{figure}
 
 % \autoref{eq:C-combine}
 % \autoref{eq:T-combine}

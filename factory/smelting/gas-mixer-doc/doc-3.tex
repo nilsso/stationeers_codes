@@ -16,14 +16,15 @@
 % \newcommand{\colorC}{OrangeRed}
 % \addbibresource{references.bib}
 
-\DeclareMathOperator{\moles}{\mathrm{mol}}
-\DeclareMathOperator{\Hyd}{\mathrm{H}_2}
-\DeclareMathOperator{\Nit}{\mathrm{N}_2}
-\DeclareMathOperator{\Ox}{\mathrm{O}_2}
-\DeclareMathOperator{\Pol}{\mathrm{X}}
-\DeclareMathOperator{\CDiox}{\mathrm{CO}_2}
-\DeclareMathOperator{\Water}{\mathrm{H}_2\mathrm{O}}
-\DeclareMathOperator{\NiOx}{\mathrm{N}_2\mathrm{O}}
+\newcommand{\moles}{\mathrm{mol}}
+% \newcommand{\joules}{\mathrm{mol}}
+\newcommand{\Hyd}{\mathrm{H}_2}
+\newcommand{\Nit}{\mathrm{N}_2}
+\newcommand{\Ox}{\mathrm{O}_2}
+\newcommand{\Pol}{\mathrm{X}}
+\newcommand{\CDiox}{\mathrm{CO}_2}
+\newcommand{\Water}{\mathrm{H}_2\mathrm{O}}
+\newcommand{\NiOx}{\mathrm{N}_2\mathrm{O}}
 
 \newcommand\pgfmathparseFPU[1]{
     \begingroup%
@@ -36,6 +37,7 @@
 % \def\vF{1000}
 % \def\tC{230}
 % \def\tH{2300}
+\def\SAMPLES{7}
 \newcommand{\setupparams}[6]{%
     \pgfmathsetmacro{\GasConstant}{8.314}
     \pgfmathsetmacro{\vF}{1000}
@@ -54,8 +56,8 @@
 \newcommand{\surf}{%
     \addplot3[%
         surf,
-        samples=25,
-        samples y=25,
+        samples=\SAMPLES,
+        samples y=\SAMPLES,
         opacity=0.5,
         domain=0:\nF,
         domain y=\tC:\tH,
@@ -67,7 +69,7 @@
     \addplot3[%
         thick,
         color=red,
-        samples=30,
+        samples=\SAMPLES,
         samples y=0,
         domain={max(\rG, max(\rR, \rB))}:\nF,
         domain y=\tC:\tH,
@@ -79,8 +81,8 @@
     \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
     \begin{tikzpicture}[scale=#1]
         \begin{axis}[
-                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
-                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                title={$P_F=\pF$, $T_F=\tF$, $P_T=\pT$, $T_T=\tT$},
+                xlabel=$n_R$, ylabel=$T_I$, zlabel=$n_I$,
                 view={-135}{45},
                 ymin=\tC, ymax=\tH,
                 zmin=0,
@@ -93,8 +95,8 @@
     \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
     \begin{tikzpicture}[scale=#1]
         \begin{axis}[
-                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
-                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                title={$P_F=\pF$, $T_F=\tF$, $P_T=\pT$, $T_T=\tT$},
+                xlabel=$n_R$, ylabel=$T_I$, zlabel=$n_I$,
                 view={-135}{45},
                 ymin=\tC,ymax=\tH,
                 zmin=0,
@@ -108,8 +110,8 @@
     \setupparams{#2}{#3}{#4}{#5}{#6}{#7}
     \begin{tikzpicture}[scale=#1]
         \begin{axis}[
-                title={$p_F=\pF$, $t_F=\tF$, $p_T=\pT$, $t_T=\tT$},
-                xlabel=$n_R$, ylabel=$t_I$, zlabel=$n_I$,
+                title={$P_F=\pF$, $T_F=\tF$, $P_T=\pT$, $T_T=\tT$},
+                xlabel=$n_R$, ylabel=$T_I$, zlabel=$n_I$,
                 view={-135}{45},
                 ymin=\tC, ymax=\tH,
                 zmin=0,
@@ -140,6 +142,8 @@
 
 \begin{document}
 
+\tableofcontents
+
 \section*{Todo}
 \begin{itemize}
     \item Add motivations for calculation specif heat capacities and energies.
@@ -147,38 +151,112 @@
 \end{itemize}
 
 \section{Introduction and Summary}
-In this section, I'll first attempt to introduce all relevant mathametical notation and gas laws,
-then attempt summarize my solutions to the proposed problem:
-
+In this section, I'll first attempt to introduce all relevant mathematical notation;
+units, fundamental concepts and gas laws in physics;
+and then attempt summarize my solutions to the proposed problem:
 \begin{quote}
     \begin{itshape}
         Given a furnace $F$ containing only $\CDiox$ at some arbitrary initial conditions, a source
-        $H$ of relatively hot $\CDiox$ and a source $C$ of relatively cold $\CDiox$, is there not
+        $C$ of relatively cold $\CDiox$ and a source $H$ of relatively hot $\CDiox$: is there not
         only some way of constructing a mixture of $H$ and $C$ such that inserting it into $F$
-        (possibly after removing from initial gas from $F$) yields exactly some target temperature
-        and pressure in $F$, but a way in which minimizes how much from $H$ and $C$ we need to add?
+        yields exactly some target temperature $T_T$ and pressure $P_T$ in $F$, but a way in which
+        \begin{enumerate*}[label=(\alph*)]
+            \item we minimize the amount $n_R$ which is removed from the initial amount of gas, and
+            \item we minimize the amounts $n_C$ from $C$ and $n_H$ from $H$ that we are adding?
+        \end{enumerate*}
     \end{itshape}
 \end{quote}
 
-\subsection{Notation}
+\subsection{Notation, basic physics, and thermodynamics}
 
 Firstly, I'll often write a closed mixture/volume of gasses as a single capital letter, like $F$ for
-furnace, and where now $F$ symbolically refers to all the conditions of the furnace. Formally:
+furnace, and where I can now use $F$ to symbolically refer to any of the conditions of the furnace.
+Formally:
 \begin{definition}[$M$ a gas mixture]
-    Let $M$ be a ``mixture/volume'' of gasses; we write:
+    Let $M$ be a mixture/volume/composition of gasses; we write:
     \begin{itemize}
         \item $V_M$ for the total volume in liters of the system in which the mixture is contained,
         \item $n_M$ for the total number of moles in the mixture,
         \item $T_M$ for the temperature of the mixture,
-        \item $P_M$ for the total pressure in kilopascals, and
-        \item $C_M$ for the specific heat of the mixture.
+        \item $P_M$ for the total pressure of the mixture,
+        \item $C_M$ for the specific heat (capacity) of the mixture, and
+        \item $Q_M$ for the total energy of the mixture.
     \end{itemize}
 \end{definition}
+\begin{note*}
+    I use \emph{volume}, \emph{mixture} and \emph{composition} somewhat interchangeably when talking
+    about some specific closed amount of gas, and that ``volume'' here has nothing to do with the
+    actual volume in liters of the container in which the closed amount of gas sits.
+
+    For example, ``a volume $M$ of gas'' versus ``the volume (in liters) of the
+    mixture/composition/volume $M$.''
+\end{note*}
+\begin{note*}
+    Seeing as we're going to be working with equations involving quantities of various units, it's
+    going to be important to understand what a particular unit of measurement means and how these
+    units relate to one-another. But to understand units is also to have some basic understanding
+    of physics and thermodynamics.
+    (It's also imperative to understand unit prefixes; like \emph{kilo} $k$ for ``a thousand of'',
+    \emph{mega} $M$ for ``a million of'', or \emph{milli} $m$ for ``a millionth of''.)
+
+    Here's sort of a summary introduction to all of these things:
+\end{note*}
+\begin{definition*}[Moles, volume, temperature, pressure]
+    A \emph{mole} (mol) is the base unit of an amount of a substance. A mole of a substance
+    contains a particular number of particles of the substance, just as gram of a substance
+    contains a certain number of particles, and so the relationship between moles and mass is
+    some constant scaling factor (that is, if I have a sample of a substance that is $a$ moles
+    and $b$ grams, then there is some number $c$ such that $a=cb$ or $\sfrac{a}{c}=b$ where $c$
+    is the scaling factor).
+
+    \emph{Volume} is the quantity of an enclosed space. Where a $m$ meter is the base unit of
+    distance, a $L$ liter is the base unit of volume. A single liter is defined as equivalent to
+    three cubic meters ($1\cdot\text{L}=1\cdot\text{m}^3$). Particles of gasses are special in
+    that they prefer to be evenly spaced apart from one-another while inside some volume. Take
+    some amount of gas (some number of moles of gas perhaps) and put it in a volume: a larger
+    volume means more space between particles, while a smaller volume means less space between
+    particles.
+
+    \emph{Temperature} is the quantity measured in $K$ kelvin that expresses hot or cold, where
+    hot and cold are manifestations of the transfer of thermal energy between particles (of
+    which all contain some amount of thermal energy). That is, an object is hot relative to its
+    colder surroundings if it has more thermal energy that its surroundings, and as a result can
+    impart some of its thermal energy to its surroundings: hot things impart energy and become
+    colder, cold things absorb energy and become hotter. Considering an amount of gas within a
+    volume, though the particles of gas are spaced apart from one-another they are not
+    stationary: they move or vibrate relative to their temperature. These movements may cause
+    the particles to collide with one-another and with the walls of the container.
+
+    \emph{Pressure} is the quantity that expresses the average amount of force that is being
+    exerted upon the area of a surface. A force (measured in newtons) is an influence that can
+    causes matter to change velocity (i.e. to push), the actual act of imparting force is called
+    work (measured in joules), and the capacity for something to do work is called energy (also
+    measured in joules). As mentioned for gas particles in a container, collisions occur between
+    the particles and the walls of the container. However much these particles end up on average
+    colliding with, or pushing against, the walls of the container is the pressure of the gas
+    within the volume, measured as pascals ($\text{Pa}$). A single pascal is defined to be a
+    single joule per cubic meter ($\text{J}/\text{m}^3$, or equivalently $\text{J}/\text{L}$
+    since $1\cdot\text{L}=1\cdot\text{m}^3$).
+\end{definition*}
+\begin{definition*}[Specific heat, total energy]
+    Informally, the specific heat (capacity) of a substance is the amount of heat/energy (in joules)
+    required to increase its temperature by a single degree, and is quantified as joules per mole
+    kelvin ($\sfrac{\text{J}}{\text{mol K}}$). Particular substances each have their
+    own specific heat (\cref{fig:gas-table}). These quantities are important in that they relate
+    energy to substance amount and temperature. Given an amount and temperature of a substance we
+    can calculate the energy; given the energy and amount of a substance we can calculate the
+    temperature; and given the energy and temperature of a substance we can calculate the amount.
+
+    The total energy then for some amount of a particular kind of gas is simply the specific heat
+    multiplied by the amount and the temperature. For example, one-thousand moles of $\CDiox$ at
+    273.15 kelvin has a total energy of $1000\cdot 273.15\cdot 27.2=742\text{kJ}$.
+\end{definition*}
 Secondly, there are seven types of gasses in the game, each with a formula. I use the formulas as
 \emph{indices} for the gasses. That is, if I say \emph{the gas $g$}, then what I mean is \emph{the
-gas indexed by $g$, an element of the set of gas indices}.
+gas indexed by $g$, an element of the set of gas indices}. I can then use this index $g$ to refer to
+the conditions, within a mixture of gasses, of just this one gas indexed by $g$.
 \begin{definition}[$g$ a gas index]
-    The set of gas indicies for Stationeers:
+    Define the set of gas indices for Stationeers:
     \[
         \calG = \{\Hyd,\Nit,\Ox,\Pol,\CDiox,\Water,\NiOx\}.
     \]
@@ -194,14 +272,49 @@ gas indexed by $g$, an element of the set of gas indices}.
         \item $C_g$ the \href{https://en.wikipedia.org/wiki/Specific_heat_capacity}{specific heat
             (capacity)} of a gas $g$.
     \end{itemize}
+    And note that we don't write $T_M(g)$ for the temperature of $g$ in $M$, because every
+    particular gas in mixture $M$ has the same temperature. Though, this often \emph{not} true for
+    the pressures of each individual constituent gas of a mixture (see Dalton's law,
+    \cref{def:daltons}).
 \end{definition}
-(See see \autoref{fig:gas-table} for a table of the gasses in Stationeers, their $g$
-formulas/indices, and their $C_g$ specific heats.)
+See see \cref{fig:gas-table} for a table of the gasses in Stationeers, their $g$
+formulas/indices, and their $C_g$ specific heats.
+\begin{note*}[Sets in math]
+    A \emph{set} in math is simply a collection of things that are distinct but of the same type,
+    are notated with their elements or their definition surrounded by braces, \{ and \}, and are
+    often represented by a widely accepted single character or symbol. I say \emph{or} for how they
+    are notated because we can define sets in various but equivalent ways: \emph{semantically}, as a
+    \emph{finite} or \emph{infinite roster}, or using what's called \emph{set-builder notation}.
+
+    To give examples of these different ways of construction, consider that numbers in general
+    are members of sets of other numbers, and often are members of various sets. And often sets
+    are \emph{subsets} of other sets; smaller and more restrictive than the outer set. Take first
+    for example the \emph{set of integers}, often represented by the symbol $\ZZ$. See the semantic
+    definition of an integer in both the semantic and set-builder definitions below:
+    \begin{align*}
+        \ZZ
+        &= \text{ the set of numbers with no fractional part} \\
+        &= \{ \ldots, -2, -1, 0, 1, 2, \ldots \}
+        = \{ n : \text{$n$ is a number with no fractional part} \}.
+    \end{align*}
+    Now consider the set $\WW$ of \emph{whole}, or \emph{counting} numbers:
+    \[
+        \WW = \{ 1, 2, 3, \ldots \} = \{ n: n\in\ZZ, n>0 \}.
+    \]
+    The colon ($:$) defines rule(s) for set-builder definition, and the symbol $\in$ means ``element
+    tof'': that what's on the left is taken to be an element of the set on the right.
+    The set we construct by the above rules is then simply the set of all the positive integers---a
+    subset of the integers.
+
+    In either example above the roster definitions are infinite roster definitions; we cannot list
+    every integer of these sets because there is an infinite number of them. On the other
+    hand, a set $\{1,2,3\}=\{n:n\in Z,0<n<4\}$ is finite in its size/in its roster definition.
+\end{note*}
 \begin{figure}
     \begin{center}
         \begin{tabular}{*3l}
             \toprule
-            Name & Formula ($g$) & Specific heat ($C_g$) \\
+            Name & Formula ($g$) & Specific heat ($C_g$ in $\sfrac{\text{J}}{\text{mol K}}$) \\
             \midrule
             Hydrogen & $\Hyd$ & 20.4 \\
             Nitrogen & $\Nit$ & 20.6 \\
@@ -236,7 +349,7 @@ Note that if $M$ consists of only one kind of gas (which I index as $g^*$):
 
 Gasses in Stationeers obey some of the ideal gas laws from real life.
 First, lets know how to calculate the specific heat of a mixture of gasses.
-Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\autoref{fig:gas-table}).
+Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\cref{fig:gas-table}).
 \begin{definition}[Specific heat capacity of a gas mixture]
     Let $M$ be a mixture of the $\calG$ gasses. The specific heat of the mixture ($C_M$) is given by
     the sum of the products of the molar ratios of the gasses in the mixtures and their respective
@@ -246,10 +359,10 @@ Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\autoref{f
         = \frac{n_M(\Hyd)}{n_M}C_{\Hyd}
         + \frac{n_M(\Nit)}{n_M}C_{\Nit}
         + \cdots
-        + = \frac{n_M(\NiOx)}{n_M}C_{\NiOx}
+        + \frac{n_M(\NiOx)}{n_M}C_{\NiOx}
         = \sum_{g\in\calG} \frac{n_M(g)}{n_M}C_g
     \]
-    Or as the dot-product $\cdot$ of vectors:
+    Or as the dot-product ($\cdot$) of vectors:
     \begin{equation}
         C_M = (\vec{n}_M \cdot \vec{C}_{\calG})\frac{1}{n_M}
     \end{equation}
@@ -264,11 +377,71 @@ Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\autoref{f
         = \angvec{C_g:g\in\calG}.
     \end{align*}
 \end{definition}
-Note that if $M$ consists of only one kind of gas $g^*$, then the ratio of $g^*\in\calG$ is $M$ is one
-(as noted before), and the ratio of $g\in\calG\setminus g^*$ in $M$ is zero.
-(We read $g\in \calG\setminus g^*$ as: $g$ is an element of the set $\calG\setminus g^*$,
-where $\calG\setminus g^*$ is the set $\calG$ but with the $g^*$ element removed.)
-\begin{example}
+\begin{note*}[If you're unfamiliar with summation notation]
+
+    A sum exactly what you think it is: $a+b$, two things added together.
+    If you want to add/sum more than two things you can of course write it out:
+    $a + b + c + d$.
+    And if there's a lot of things to sum up, and there's some sort of logical
+    progression in the sequence of things you're summing as well as a logical end point,
+    then you can use ellipses:
+    $1 + 2 + 3 + \cdots + 99 + 100$.
+
+    But another, more compact, way to notate this is is \emph{summation notation}.
+    Summation notation uses the symbol capital sigma $\sum$ to denote a summation,
+    and uses some kind of an \emph{index} to designate where we start in the sum, and
+    sometimes where to end.
+    For example, the following sum says that we're letting $i$ be our index, that we start with
+    $i$ being 1, we stop when $i$ is 100, and after each $i$ we move onto the next $i$
+    ($i=1,2,3,\ldots,99,100$). What we're summing are the numbers $x_i$ indexed by $i$:
+    \[
+        \sum_{i=1}^{100} x_i \quad \text{(for whatever number $x_i$ is)}.
+    \]
+    In English we would say ``take the sum of the values $x_i$ for each $i$ in the range
+    1 to 100 inclusive,'' where \emph{inclusive} means we include $x_{100}$ in the sum, as
+    opposed to \emph{exclusive} where we would exclude $x_{100}$. We also might write this range
+    of 1 to 100 inclusive as $[1,100]$; versus $[1,100)$ meaning we don't include 100, $(1,100]$
+    meaning we don't include 1 but \emph{do} include 100, and $(1,100)$ where we don't include
+    either 1 nor 100.
+
+    For a less abstract example, consider the sum of the first 100 positive integers:
+    \[
+        \sum_{x=1}^{100} x
+        = 1 + 2 + 3 + \cdots + 99 + 100.
+    \]
+    However, the index need not be a number. A common way of expressing indices is via sets, and is
+    to say ``take the sum of this expression indexed by every element of the given set.''
+    For example: $\sum_{g\in\calG}C_g = $ the sum of the specific heats for each gas indexed by $g$
+    in the set of gas indices $\calG$.
+\end{note*}
+\begin{note*}[If you're unfamiliar with vectors and dot-products]
+
+    Consider a vector to be a list of numbers.
+    For example, here are two vectors, $\vec x$ and $\vec y$, of size 3:
+    \[
+        \vec x = \angvec{x_0,x_1,x_2}, \quad
+        \vec y = \angvec{y_0,y_1,y_2}.
+    \]
+    The dot product ($\cdot$) of $\vec x$ and $\vec y$ (written $\vec x\cdot\vec y$) is given
+    as the sum of the products of the corresponding entries of $\vec x$ and $\vec y$:
+    \[
+        \vec x\cdot\vec y
+        = \angvec{x_0,x_1,x_2}\cdot\angvec{y_0,y_1,y_2}
+        = x_0 y_0+x_1 y_1+x_2 y_2.
+    \]
+\end{note*}
+Note that if $M$ consists of only one kind of gas $g^*$, then the ratio of $g^*\in\calG$ in $M$ is
+one, and the ratio of $g\in\calG\setminus g^*$ in $M$ is zero. And so:
+\[
+    n_F(g) = \begin{cases}
+        n_F(g) = n_F, & \text{if } g = g^* \\
+        n_F(g) = 0, & \text{if } g \ne g^* \\
+    \end{cases}.
+\]
+(We read $g\in
+\calG\setminus g^*$ as: $g$ is an element of the set $\calG\setminus g^*$, where $\calG\setminus
+g^*$ is the set $\calG$ but with the $g^*$ element removed.)
+\begin{example*}[Using summation notation]
     Suppose $F$ our furnace contains 10 moles of each kind of gas, of which there are seven.
 
     Then $n_F=70$, and:
@@ -279,8 +452,8 @@ where $\calG\setminus g^*$ is the set $\calG$ but with the $g^*$ element removed
         &= \frac{10}{70}\left(20.4 + 20.6 + 21.1 + 24.8 + 28.2 + 72 + 23\right)
         = 30.01
     \end{align*}
-\end{example}
-\begin{example}
+\end{example*}
+\begin{example*}[Using vector notation]
     Suppose $F$ our furnace contains 70 moles of only $g^*=\CDiox$.
 
     Then $n_F=n_F(\CDiox)=70$, and:
@@ -293,15 +466,15 @@ where $\calG\setminus g^*$ is the set $\calG$ but with the $g^*$ element removed
             C_F
             &= \left(\vec{n}_F \cdot \vec{C}_{\calG}\right)\frac{1}{n_F} \\
             &=
-            \left((0,0,0,0,70,0,0)
+            \left(\angvec{0,0,0,0,70,0,0}
             \cdot
-            (C_{\Hyd},C_{\Nit},C_{\Ox},C_{\Pol},C_{\CDiox},C_{\Water},C_{\NiOx})\right)
+            \angvec{C_{\Hyd},C_{\Nit},C_{\Ox},C_{\Pol},C_{\CDiox},C_{\Water},C_{\NiOx}}\right)
             \frac{1}{70}
             \\
             &= (70\cdot C_{\CDiox})\frac{1}{70} = C_{\CDiox}
         \end{aligned}
     \end{gather*}
-\end{example}
+\end{example*}
 This reduction of a volume's specific heat to a constant is one reason why I prefer a single gas
 ($\CDiox$) design; it reduces many of the later problems from problems of differential equations to
 simple problems of algebra. The other reason is that $\CDiox$ is plentiful, both as at atmospheric
@@ -315,10 +488,16 @@ In terms of gas laws, the model in Stationeers obeys the following laws for a fi
         \label{eq:gay-lussac}
     \end{equation}
     Change in pressure is directly proportional to change in temperature.
+    \begin{note*}
+        In Stationeers this law is \emph{only half-obeyed}!
+        Pressure is dependent on temperature (i.e. changing the temperature in a fixed volume
+        expectedly affects pressure proportionally), but temperature is \emph{not} dependent on
+        temperature (i.e. changing the pressure/removing gas does \emph{not} affect temperature).
+
+        (Also note that we wont actually be using this law for solving the problem, but it is very
+        important to understand in general; especially the above caveat.)
+    \end{note*}
 \end{definition}
-\textbf{Note!} This law is only \emph{half}-obeyed! In game, changing the temperature in a
-fixed volume expectedly affects the pressure proportionally, but not vice-versa. That is:
-removing gas, i.e. ``lowering its pressure'', does \emph{not} change its temperature.
 
 \begin{definition}[Ideal/combined gas law]
     \begin{equation}
@@ -330,6 +509,7 @@ removing gas, i.e. ``lowering its pressure'', does \emph{not} change its tempera
 \end{definition}
 
 \begin{definition}[Dalton's law of partial pressures]
+    \label{def:daltons}
     \begin{equation}
         P
         = P(\Hyd)+P(\Nit)+P(\Ox)+P(\Pol)+P(\CDiox)+P(\Water)+P(\NiOx)
@@ -350,16 +530,24 @@ Given volumes $A$ and $B$, and $C$ the result of combining $A$ and $B$:
     &n_C = n_A + n_B &
     &\text{(moles are additive)} & \label{eq:n-combine} \\
     &C_C = \left((\vec{n}_A+\vec{n}_B)\cdot\vec{C}_{\calG}\right)\frac{1}{n_C} &
-    &\text{(combined specific heat)} & \label{eq:C-combine} \\
+    &\text{(combined specific heat of a single mixture)} & \label{eq:C-combine} \\
     &T_C n_C C_C = T_A n_A C_A+T_B n_B C_B &
-    &\text{(combined energies)} & \label{eq:energy-combine}
+    &\text{(combined energies of two mixtures)} & \label{eq:energy-combine}
 \end{flalign}
+\begin{note*}[Why we need to consider combined energies]
+    When we mix a volume of gas $A$ with another $B$ into a combined volume $C$, the resulting
+    combined energy is entirely dependent on not only the temperatures of $A$ and $B$, but also
+    the compositions of $A$ and $B$. There is a lot more energy in one mole of $\Water$ at $273.15$
+    kelvin than there is in one mole of $\CDiox$ (precisely, 72 joules to 28.2 joules).
+    When we combine $A$ and $B$ we create a new composition, but the 
+\end{note*}
 With all this notation and all these gas equations in mind,
 we move onto solving the proposed problem.
 
-\subsection{Summary}
+\pagebreak
+\subsection{Solving the problem}
 
-Drafting up the scenario:
+To draft up the scenario:
 
 \emph{(Initial conditions)}
 A furnace already contains some amount of ``hot'' $\CDiox$ as a starter. We add the reagents for
@@ -406,17 +594,14 @@ sources, that when added to $F$ achieves $T_T$ and $P_T$ in the furnace.
     \label{fig:var-table}
 \end{figure}
 
-There will be many variables in the following work (see \autoref{fig:var-table} for descriptions for
-all of the variables we will be encountering---note that I use \emph{volume}, \emph{mixture} and
-\emph{composition} somewhat interchangeably when talking about some specific closed amount of gas,
-and that volume here has nothing to do with the actual volume of the container in which the closed
-amount of gas sits); we'll first lay out the relationships between
+There will be many variables in the following work (see \cref{fig:var-table} for descriptions for
+all of the variables we will be encountering); we'll first lay out the relationships between
 these different variables with respect to the laws and equations defined above. We will use these
 relationships to establish a system of equations.
 
 \subsubsection*{Calculating target moles}
 
-Given that $P_T$ and $T_T$ are our fixed targets, we can use the ideal gas law (\autoref{eq:ideal})
+Given that $P_T$ and $T_T$ are our fixed targets, we can use the ideal gas law (\cref{eq:ideal})
 to solve for $n_T$ the target moles we will need. From the game we know the volume of a furnace
 $V_F$ to be 1,000 liters, and $R$ the universal gas constant is $8.314$ joules per mole kelvin (and
 note that $1\ \text{kPa}=1\ \sfrac{\text{J}}{\text{m}^3}=1\ \sfrac{\text{J}}{\text{L}}$). Then:
@@ -431,9 +616,9 @@ note that $1\ \text{kPa}=1\ \sfrac{\text{J}}{\text{m}^3}=1\ \sfrac{\text{J}}{\te
     = \frac{P_T\cdot V_F}{R\cdot T_T}\text{mol}
 \end{align}
 
-\subsubsection*{Simplifying energy equations (\autoref{eq:C-combine} and \autoref{eq:energy-combine})}
+\subsubsection*{Simplifying energy equations (\cref{eq:C-combine} and \cref{eq:energy-combine})}
 
-Firstly, consider \autoref{eq:C-combine} for some volumes $A$, $B$ and $C$ of \emph{only} $\CDiox$,
+Firstly, consider \cref{eq:C-combine} for some volumes $A$, $B$ and $C$ of \emph{only} $\CDiox$,
 and where $C$ is the combination of $A$ and $B$. Then:
 \[
     C_C
@@ -442,7 +627,7 @@ and where $C$ is the combination of $A$ and $B$. Then:
     = n_C C_{\CDiox}\frac{1}{n_C}
     = C_{\CDiox}.
 \]
-As well as $C_A=C_B=C_C=C_{\CDiox}$. Then \autoref{eq:energy-combine} can be simplified:
+As well as $C_A=C_B=C_C=C_{\CDiox}$. Then \cref{eq:energy-combine} can be simplified:
 \begin{alignat}{4}
     &\phantom{\Rightarrow} &
     &\ T_C n_C C_C &
@@ -466,45 +651,44 @@ on $n_R$:
     0 \le n_R \le n_F.
 \]
 
-\subsubsection*{Combinations of moles (applying \autoref{eq:n-combine})}
+\subsubsection*{Combinations of moles (applying \cref{eq:n-combine})}
 
 When we have theoretically reached our ideal target pressure and temperature, we will have removed
 some amount of moles $n_R$ from the initial amount $n_F$ in the furnace $F$, and will have input
 some amount of moles $n_I$ into the furnace. The number of moles $n_I$ of the input volume $I$ is a
 function of $n_H$, some number of moles from the hot source, and $n_C$, some number of moles from
-cold source, that must satisfy \autoref{eq:n-combine}:
+cold source, that must satisfy:
 \begin{equation}
-    n_I = n_H + n_C.
-    \label{eq:n-combine-model}
+    n_I = n_H + n_C. \label{eq:n-combine-model-1}
 \end{equation}
 The number of moles at the theoretical target must also satisfy this equation:
-\begin{align*}
+\begin{align}
     n_T
-    &= (n_F-n_R)+n_I \\
-    \intertext{(Substituting \autoref{eq:n-combine-model})}
-    &= (n_F-n_R)+(n_H + n_C).
-\end{align*}
+    &= (n_F-n_R)+n_I \label{eq:n-combine-model-2} \\
+    \intertext{(Substituting \cref{eq:n-combine-model-1})}
+    &= (n_F-n_R)+(n_H + n_C). \label{eq:n-combine-model-3}
+\end{align}
 
-\subsubsection*{Combinations of energies (applying \autoref{eq:T-combine})}
+\subsubsection*{Combinations of energies (applying \cref{eq:T-combine})}
 
 The temperature and number of moles for the input volume is a function of the temperature and number
 of moles from the hot and cold sources and must satisfy equation
-\autoref{eq:T-combine}:
+\cref{eq:T-combine}:
 \begin{equation}
     T_I n_I = T_H n_H + T_C n_C.
-    \label{eq:T-combine-model}
+    \label{eq:T-combine-model-1}
 \end{equation}
 Similarly, the temperature and number of moles for the target is a function of the initial
 temperature in the furnace, the number of moles remaining in the furnace after having removed some
 amount, and the temperature and number of moles of the input volume:
-\begin{align}
-    T_T n_T
-    &= T_F(n_F-n_R)+T_I n_I \label{eq:T-combine-model-2} \\
-    \intertext{(Substituting \autoref{eq:T-combine-model})}
-    &= T_F(n_F-n_R)+(T_H n_H+T_C n_C). \label{eq:T-combine-model-3}
-\end{align}
-\emph{This is the equation we're most interested in, as combines all the parts of the problem
-together and allows us to easily solve for either $T_I$ or $T_T$.}
+\begin{equation}
+    T_T n_T = T_F(n_F-n_R)+T_I n_I \label{eq:T-combine-model-2}
+\end{equation}
+\begin{itshape}
+    We'll find this to be one of the most useful equations since it combines all the parts of the
+    problem together and allows us to solve for all sorts of variables (e.g. $T_I$ and $T_T$) and
+    quantities (e.g. $T_I n_I$).
+\end{itshape}
 
 \subsubsection*{Bounds on temperatures}
 
@@ -516,9 +700,20 @@ So from this we get the bounds:
 \[
     T_C\le T_T\le T_H,\text{ and }T_C\le T_I\le T_H.
 \]
-\begin{example}
-    % (This will be more of an example of thinking about \emph{how} we can use these equations
-    % to 
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.49\linewidth}
+            \includegraphics[width=.95\linewidth]{./images/desmos-example-1-1.png}
+        \end{subfigure}
+        \begin{subfigure}{0.49\linewidth}
+            \includegraphics[width=.95\linewidth]{./images/desmos-example-1-2.png}
+        \end{subfigure}
+    \end{center}
+    \caption{Desmos visualization of the affect of $n_R$, $n_H$ and $n_C$
+    on the final temperature $T_E$ and pressure $P_E$.}
+    \label{fig:desmos-1}
+\end{figure}
+\begin{example*}
     Suppose we have initial conditions $T_F=500$, $P_F=1000$, $T_C=200$ and $T_H=2500$,
     but we don't have a particular target pressure $P_T$ or temperature $T_T$;
     we just want to see how things change as we remove some amount $n_R$ from $F$,
@@ -530,12 +725,13 @@ So from this we get the bounds:
     Our procedure is this: pick values for $n_R$, $n_H$ and $n_C$,
     \begin{enumerate*}[label=(\alph*)]
         \item calculate $n_E=(n_F-n_R)+n_I$ where $n_I=n_H+n_C$,
-        \item calculate $T_E$ by solving \autoref{eq:T-combine-model-3} for $T_E$, and then
-        \item calculate $P_E$ by solving \autoref{eq:ideal} for $P_E$.
+        \item calculate $T_E$ by solving $T_E n_E=T_F(n_F-n_R)+T_I n_I$
+            (\cref{eq:T-combine}) for $T_E$, and then
+        \item calculate $P_E$ by solving \cref{eq:ideal} for $P_E$.
     \end{enumerate*}
 
     First we need to calculate $n_F$, the initial amount of moles in the furnace, using
-    \autoref{eq:ideal} (recall that $V_F=1000$ and $R=8.314$):
+    \cref{eq:ideal} (recall that $V_F=1000$ and $R=8.314$):
     \[
         n_F
         = \frac{P_F\cdot V_F}{R\cdot T_F}
@@ -545,7 +741,7 @@ So from this we get the bounds:
     (Alternatively, since this is Stationeers we're talking about, we would have been able to
     find this value just by reading the number of moles from the furnace:
     \mintinline{text}{l nF furnace TotalMoles}.)
-    \begin{example}[$n_R=100$, $n_H=200$ and $n_C=0$]
+    \begin{example*}[$n_R=100$, $n_H=200$ and $n_C=0$]
         \phantom{ }
         \begin{enumerate}[label=(\alph*)]
             \item
@@ -571,31 +767,37 @@ So from this we get the bounds:
                     \end{aligned}
                 \end{math}
         \end{enumerate}
-    \end{example}
-    % \begin{example}[$n_R=0$, $n_N=0$, and $n_C=300$]
-    %     \phantom{ }
-    %     \begin{enumerate}[label=(\alph*)]
-    %         \item
-    %             \begin{math}
-    %                 n_E=(240.56-0)+(0+300)=540.56
-    %             \end{math}
-    %         \item
-    %             \begin{math}
-    %                 T_E
-    %                 % = (T_F(n_F-n_R)+(T_H n_H+T_C n_C))/n_E
-    %                 = (500\cdot 240.56+(2500\cdot 0+200\cdot 300))/540.56
-    %                 \doteq 1674.54\text{ K}.
-    %             \end{math}
-    %         \item
-    %             \begin{math}
-    %                 P_E
-    %                 % = (n_E\cdot R\cdot T_E)/V_F
-    %                 = (340.56\cdot 8.314\cdot 1674.54)/1000
-    %                 \doteq 4741.32\text{ kPa}.
-    %             \end{math}
-    %     \end{enumerate}
-    % \end{example}
-\end{example}
+    \end{example*}
+    \begin{example*}[$n_R=0$, $n_H=0$, and $n_C=300$]
+        \phantom{ }
+        \begin{enumerate}[label=(\alph*)]
+            \item
+                \begin{math}
+                    n_E=(240.56-0)+(0+300)=540.56
+                \end{math}
+            \item
+                \begin{math}
+                    T_E
+                    % = (T_F(n_F-n_R)+(T_H n_H+T_C n_C))/n_E
+                    = (500\cdot 240.56+(2500\cdot 0+200\cdot 300))/540.56
+                    \doteq 333.51\text{ K}.
+                \end{math}
+            \item
+                \begin{math}
+                    P_E
+                    % = (n_E\cdot R\cdot T_E)/V_F
+                    = (540.56\cdot 8.314\cdot 333.51)/1000
+                    \doteq 1498.84\text{ kPa}.
+                \end{math}
+        \end{enumerate}
+    \end{example*}
+    From these examples (and playing around on Desmos) we can see that it should be possible to
+    construct a decent variety of target pressures and temperatures.
+
+    Check out this quick
+    \href{https://www.desmos.com/calculator/clfts6kzwk}{graph in Desmos} to help visualize
+    what's going on (or see \cref{fig:desmos-1}).
+\end{example*}
 
 
 \subsection{Calculating minimal amounts}
@@ -604,42 +806,293 @@ We have enough bounds here to establish a system of equations with which we can 
 that is to be able to solve for a minimal amounts $n_R$ to remove, $n_H$ of $H$ to add and $n_C$ of
 $C$ to add. It will be a matter of solving these equations for particular variables, and applying
 certain metrics to solve for these minimal values.
+Recall that what we want is for our furnace to end up at some target temperature $T_T$ and pressure
+$P_T$. We will find there there's a whole lot of potential solutions in terms of $n_R$, $n_H$ and
+$n_C$ (technically an infinite amount, even within the bounds we establish), but we can simplify
+these solutions by selecting the ones which either minimize the amount removed from the initial
+furnace volume, minimize the amount added from only $H$, or minimize the amount added from only $C$.
 
-First, solve \autoref{eq:T-combine-model-2} for $n_I$. This yields $n_I$ as a function of $n_R$ and
+First, solve \cref{eq:T-combine-model-1} for $n_I$. This yields $n_I$ as a function of $n_R$ and
 $T_I$; the remaining variables ($T_T$, $n_T$, $T_F$ and $n_F$) are all fixed:
 \begin{equation}
-    f(n_R,T_I) = n_I = \frac{T_T n_T+T_F(n_F-n_R)}{T_I}.
-    \label{eq:surf}
+    f(n_R,T_I) = n_I = \frac{T_T n_T-T_F(n_F-n_R)}{T_I}.
+    \label{eq:f}
 \end{equation}
-We can plot this function $f$, being of two variables $n_R$ and $T_I$, in three dimensions using the
-bounds on $T_I$ and $n_R$: that $T_C\le T_I\le T_H$ and $0\le n_R\le n_F$. \autoref{fig:surfaces}
-visualizes this bounded surface for a few different initial conditions (in all cases I chose
-$T_C=200$ and $T_H=2500$). What this shows us is that any point $\big(n_R,T_I,f\big)$ (where $f$ is
-shorthand for $f(n_R,T_I)$) on the surface satisfies \autoref{eq:surf}.
 \begin{figure}
     \begin{center}
-        \begin{subfigure}{0.32\textwidth}
-            \Surf[.5]{4000}{500}{9000}{700}{200}{2500}
+        \begin{subfigure}{0.48\textwidth}
+            \Surf[.7]{4000}{500}{9000}{700}{200}{2500}
         \end{subfigure}
-        \begin{subfigure}{0.32\textwidth}
-            \Surf[.5]{6000}{600}{5000}{800}{200}{2500} % red example
+        \begin{subfigure}{0.48\textwidth}
+            \Surf[.7]{6000}{600}{5000}{800}{200}{2500} % red example
         \end{subfigure}
-        \begin{subfigure}{0.32\textwidth}
-            \Surf[.5]{15000}{900}{6000}{600}{200}{2500} % blue example
+        \begin{subfigure}{0.48\textwidth}
+            \Surf[.7]{15000}{900}{6000}{600}{200}{2500} % blue example
         \end{subfigure}
         \caption{The surface defined by $(n_R,T_I,f)$ for various initial conditions.}
-        \label{fig:surfaces}
+        \label{fig:surf}
     \end{center}
-    % \caption[]{%
-    %     The $(n_R,t_I,f)$ solution surface
-    %     and $(n_R,h,g)$ embedded curve.
-    % }
-    % \caption{Surface defined by $f:
-    % \label{fig:plot-1}
+\end{figure}
+We can plot this function $f$, being of two variables $n_R$ and $T_I$, in three dimensions using the
+bounds on $T_I$ and $n_R$: that $T_C\le T_I\le T_H$ and $0\le n_R\le n_F$. \cref{fig:surf}
+visualizes this bounded surface for a few different initial conditions (and in these examples I
+chose $T_C=200$ and $T_H=2500$).
+\begin{note*}
+    This surface we define by $(n_R,T_I,f)$ is in-fact a two-dimensional surface, although it is
+    \emph{embedded} within three-dimensional space! That is, imagine that you are a point on this
+    surface, and that you are not allowed to leave it. You can walk across this surface, but you
+    cannot jump up off of it, and you cannot get below it, but you can still see above and below:
+    you still stand within three-dimensional space but you cannot leave this two dimensional
+    surface. This is what we mean by point solutions to equation \cref{eq:f}: a point in three
+    dimensional space $(x,y,z)=(n_R,T_I,n_I)$ sits upon this surface if and only if
+    $z=f(x,y)\Rightarrow n_I=f(n_R,T_I)$ is satisfied (that is, if after evaluating $f$ at $n_R$ and
+    $T_I$, the equality $n_I=f(n_R,T_I)$ is indeed \emph{true}).
+\end{note*}
+Second, consider solving $n_T=(n_F-n_R)+n_I$ for $n_I$. We get $n_I=n_T-n_F+n_R$. This expresses
+$n_I$ as a function of merely $n_R$, since both $n_F$ and $n_T$ are fixed:
+\begin{equation}
+    g(n_R) = n_I = n_T-n_F+n_R.
+    \label{eq:g}
+\end{equation}
+Then lets take $f$ (\cref{eq:f}) and, instead of solving for $n_I$, solve for $T_I$:
+\[
+    n_I = \frac{T_T n_T+T_F(n_F-n_R)}{T_I}
+    \Rightarrow
+    T_I = \frac{T_T n_T+T_F(n_F-n_R)}{n_I}
+\]
+With this we keep $n_R$ as a free-variable, but replace $n_I$ with $g$ (\cref{eq:g}).
+We'll call this newly constructed equation, of \emph{only one variable}, $h$:
+\begin{equation}
+    h(n_R) = T_I
+    = \frac{T_T n_T+T_F(n_F-n_R)}{n_I}
+    = \frac{T_T n_T+T_F(n_F-n_R)}{g(n_R)}.
+    \label{eq:h}
+\end{equation}
+Consider the surface we previously defined by $(n_R,T_I,f)$ (\cref{fig:surf}).
+We have to pick both $n_R$ and $T_I$ together, a \emph{pair} of points, from a mesh of points (the
+Cartesian product of the $n_R$ and $T_I$ domains). However, now we have an expression $h(n_R)=T_I$
+that is dependent on only this only variable $n_R$.
+What we have then is that we can solve for $T_I$ in terms of of $n_R$
+(\cref{eq:h}, $T_I=h(n_R)$), and then can solve for $n_I$ in terms of $n_R$ and $T_I=h(n_R)$
+(\cref{eq:f}, $n_I=f\big(n_R,g(n_R)\big)$).
+
+Effectively, we've reduced our previously two dimensional surface down to a one dimensional
+\emph{curve} (a curve which is embedded within the surface, with the surface embedded within
+three dimensional space).
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.48\textwidth}
+            \Curve[.6]{4000}{500}{9000}{700}{200}{2500}
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Curve[.6]{6000}{600}{5000}{800}{200}{2500} % red example
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Curve[.6]{15000}{900}{6000}{600}{200}{2500} % blue example
+        \end{subfigure}
+        \caption{
+            The curve in red defined by $(n_R,g,f)$ embedded within the surface defined by
+            $(n_R,T_I,f)$ (for the same various initial conditions).
+        }
+        \label{fig:curve}
+    \end{center}
+\end{figure}
+And again we can plot this; see \cref{fig:curve} in which we can see the curve embedded within
+the surface.
+
+So we now have values for both $T_I$ and $n_I$ in terms of whatever we pick for $n_R$.
+However $n_I$ is not just some amorphous gas mixture, but a particular combination of moles from
+$C$ and moles from $H$---which we can now solve for.
+Consider the equations
+$n_I=n_H+n_C$ (\cref{eq:n-combine-model-1}) and
+$T_I n_I=T_H n_H+T_C n_C$ (\cref{eq:T-combine-model-1});
+solve the first in terms of $n_C$:
+\[
+    n_I=n_H+n_C \Rightarrow n_C=n_I-n_H
+\]
+For the second, recognize that $T_I$, $n_I$, $T_H$ and $T_C$ are all fixed; all except for $n_H$ and
+$n_C$. But we solved the first equation for $n_C$. Thus, substitute $n_C$ with $n_I-n_H$ in the
+second equation and solve for $n_H$:
+\begin{equation}
+    T_I n_I
+    = T_C n_C+T_H n_H
+    = T_C(n_I-n_H)+T_H n_H
+    \Rightarrow
+    n_H = \frac{n_I(T_C-T_I)}{T_C-T_H}.
+\end{equation}
+So that now we have $n_H$ as a function of everything we previously calculated, and $n_C$ is simply
+$n_I-n_H$,
+\begin{itshape}
+    and to an extent we have completely solved the proposed problem! Given our initial conditions
+    and chosen target pressure and temperature, we can now choose any $n_R$ in the range $0$ to
+    $n_F$ with which we can calculate exactly the number of moles $n_C$ from $C$ and $n_H$ from $H$
+    to combine into $I$ so that when we add $I$ into $F$ we precisely hit our target temperature and
+    pressure.
+\end{itshape}
+
+\emph{That being said, we're not quite done\ldots}
+\begin{example*}
+    Lets consider the third example of \cref{fig:curve}, where our initial conditions are
+    $P_F=15000$ and $T_F=900$, and target conditions are $P_T=6000$ and $T_T=600$.
+
+    Using Desmos again, I've sketched up
+    \href{https://www.desmos.com/calculator/h7vtybqa5r}{the model so far}
+    (\cref{fig:desmos-2})
+    and plugged in these initial conditions.
+    By moving the $n_R$ slider, notice that calculated values $T_E$ and $P_E$ (our final temperature
+    and pressure) are exactly $T_T$ and $P_T$ (our targets), always.
+
+    However, try lowering the value of $n_R$ and observe the values of $n_H$ and $n_C$;
+    one or both of them go negative! These values are \emph{mathematically correct}, but intuitively
+    it makes no sense to add a \emph{negative} amount of $C$ or $H$\ldots
+\end{example*}
+As the example above demonstrates, we're not actually done. We've solved for all
+real-solutions to the problem, but we've neglected the bound that we cannot add a negative amount of
+$C$ or $H$. Looking back at the third example of \cref{fig:curve}, notice that the curve exits
+to the right of the graph. This shows us that not all values of $n_R$ are valid for our model,
+because for some values (where the curve leaves the graph) we are adding a negative amount of $C$ or
+$H$.
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.49\linewidth}
+            \includegraphics[width=.95\linewidth]{./images/desmos-example-2-1.png}
+        \end{subfigure}
+        \begin{subfigure}{0.49\linewidth}
+            \includegraphics[width=.95\linewidth]{./images/desmos-example-2-2.png}
+        \end{subfigure}
+    \end{center}
+    \caption{Desmos visualization of the $n_R$, $n_I$, $n_H$ and $n_C$ relationships.}
+    \label{fig:desmos-2}
 \end{figure}
 
-% \autoref{eq:C-combine}
-% \autoref{eq:T-combine}
+To address this, consider the energy quantity $T_I n_I$. So far we have not bounded this quantity,
+but in fact $T_I$ is bounded by $T_C\le T_I\le T_H$. We can use these inequalities to solve for
+a true lower bound to $n_R$ by substituting $n_I=n_T-n_F+n_R$ (\cref{eq:n-combine-model-1})
+and $T_I n_I=T_T n_T-T_F(n_F-n_R)$ (from solving \cref{eq:T-combine-model-2} for $T_I n_I$).
+% \begin{paracol}{2}
+%     \switchcolumn
+% \end{paracol}
+
+First solving for $n_R$ via $T_C n_I\le T_I n_I$:
+\begin{alignat*}{2}
+    &\phantom{\Rightarrow\ }&
+    T_C n_I &\le T_I n_I \\
+    &{\Rightarrow\ }&
+    T_C(n_T-n_F+n_R) &\le T_T n_T - T_F(n_F-n_R) \\
+    &{\Rightarrow\ }&
+    T_C n_T - T_C n_F + T_C n_R &\le T_T n_T - T_F n_F + T_F n_R \\
+    &{\Rightarrow\ }&
+    T_C n_T - T_T n_T + T_F n_F - T_C n_F &\le T_F n_R - T_C n_R \\
+    &{\Rightarrow\ }&
+    n_T(T_C - T_T) + n_F(T_F - T_C) &\le n_R(T_F - T_C)
+\end{alignat*}
+\begin{equation}
+    \Rightarrow n_{R_H} = \frac{n_T(T_C - T_T)}{T_F - T_C} + n_F \le n_R.
+    \label{eq:C-bound}
+\end{equation}
+And second, solving for $n_R$ via $T_I n_I\le T_H n_I$:
+\begin{alignat*}{2}
+    &\phantom{\Rightarrow\ }&
+    T_I n_I &\le T_H n_I \\
+    &{\Rightarrow\ }&
+    T_T n_T - T_F(n_F-n_R) &\le T_H(n_T-n_F+n_R) \\
+    &{\Rightarrow\ }&
+    T_T n_T - T_F n_F + T_H n_F &\le T_H n_T - T_H n_F + T_H n_R \\
+    &{\Rightarrow\ }&
+    T_T n_T - T_H n_T + T_H n_F - T_F n_F &\le T_H n_R - T_F n_R \\
+    &{\Rightarrow\ }&
+    n_T(T_T - T_H) + n_F(T_H - T_F) &\le n_R(T_H - T_F)
+\end{alignat*}
+\begin{equation}
+    \Rightarrow n_{R_C} = \frac{n_T(T_T - T_H)}{T_H - T_F} + n_F \le n_R.
+    \label{eq:H-bound}
+\end{equation}
+The names $n_{R_H}$ and $n_{R_C}$ that I have chosen might be confusing and appear to be backwards,
+but this is what these two lower bounds are actually telling us about $n_R$:
+\begin{itemize}
+    \item The lower bound $n_{R_C}$, despite being a function of $T_H$,
+        tells us that if we remove an amount less than $n_{R_C}$ (i.e. if $n_R<n_{R_C}$),
+        then $n_C$ becomes negative; and\ldots
+    \item The lower bound $n_{R_H}$, despite being a function of $T_C$,
+        tells us that if we remove an amount less than $n_{R_H}$ (i.e. if $n_R<n_{R_H}$),
+        then $n_H$ becomes negative.
+\end{itemize}
+So since we know that we are not allowed to remove an amount less than either of these bounds, nor
+are we allow to remove less-than zero, we can simplify the bounds on $n_R$ once-and-for-all:
+\begin{equation}
+    n_{R_{\min}} \le n_R \le n_F, \quad
+    \text{where } n_{R_{\min}} = \max(0,n_{R_C},n_{R_H}).
+    \label{eq:n_R-bound}
+\end{equation}
+So we have fixed the range for $n_R$ but we haven't actually said what value to choose.
+Now, there's some analysis we could apply to help study this curve (and that might be something I
+relearn later to include here), but from the visualization we can also clearly see that where this
+curve will always intersect the boundaries of the graph \cref{fig:full} is actually the point at
+which not only $n_R$ is minimal, but so is $n_C$ and $n_H$ (by virtue of minimizing $n_I$).
+
+\begin{itshape}
+    Therefore, $n_{R_{\min}}$ doesn't just give us the range for $n_R$ but it actually gives us the
+    minimal point!
+\end{itshape}
+\begin{figure}
+    \begin{center}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.6]{4000}{500}{9000}{700}{200}{2500}
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.6]{6000}{600}{5000}{800}{200}{2500} % red example
+        \end{subfigure}
+        \begin{subfigure}{0.48\textwidth}
+            \Full[.6]{15000}{900}{6000}{600}{200}{2500} % blue example
+        \end{subfigure}
+        \caption{
+            The surface $(n_R,T_I,f)$, the curve $(n_R,g,f)$, and a point $(n_R,g,f)$ where
+            $n_R$ is determined to be $\max(0,n_{R_C},n_{R_H})$.
+        }
+        \label{fig:full}
+    \end{center}
+\end{figure}
+
+We have, in the end, a final theorem to use in the application of solving the problem within
+Stationeers:
+\begin{thm}[Acquiring $T_T$ and $P_T$ with minimal $n_R$, $n_C$ and $n_H$]
+
+    Fix a single gas furnace system $F$ with initial temperature $T_F$ and pressure $P_F$, a target
+    temperature $T_T$ and target pressure $P_T$, a cold source $C$ with temperature $T_C\le T_T$,
+    and a hot source $H$ with temperature $T_H\ge T_T$.
+
+    The point $(n_R,n_C,n_H)$ which satisfies $T_T n_T=T_F(n_F-n_R)+T_I n_I$ that minimizes the
+    values of $n_R$, $n_H$ and $n_C$ is given by the following algorithm:
+    \begin{multicols}{2}
+        \begin{enumerate}[label=(\alph*)]
+            \item $n_T = \dfrac{P_T V_F}{R T_T}$,
+            \item $n_{R_C} = \dfrac{n_T(T_T - T_H)}{T_H - T_F} + n_F$,
+            \item $n_{R_H} = \dfrac{n_T(T_C - T_T)}{T_F - T_C} + n_F$,
+            \item ${\color{colorA}n_R} = n_{R_{\min}} = \max(0, n_{R_C}, n_{R_H})$,
+            \item $n_I = n_T - n_F + n_R$,
+            \item $T_I = \dfrac{T_T n_T - T_F(n_F - n_R)}{n_I}$,
+            \item ${\color{colorA}n_H} = \dfrac{n_I(T_C - T_I)}{T_C - T_H}$,
+            \item ${\color{colorA}n_C} = n_I - n_H$.
+        \end{enumerate}
+    \end{multicols}
+\end{thm}
+
+% \begin{example*}
+%     Again considering the initial conditions of \cref{fig:curve}'s third case
+%     ($P_F=15000$, $T_F=900$, $P_T=6000$, $T_T=600$) we can now calculate a correct lower bound:
+%     \[
+%         n_{R_C} \doteq 75.17, \quad
+%         n_{R_H} \doteq 530.18, \quad
+%         n_{R_{\min}} = \max(0,n_{R_C},n_{R_H}) = 530.18.
+%     \]
+% \end{example*}
+
+% ; thus $n_{R_C}$ is the true lower bound.
+% So to account for these impossibilities, we
+
+
+% \cref{eq:C-combine}
+% \cref{eq:T-combine}
 
 % Our goal: 
 \end{document}

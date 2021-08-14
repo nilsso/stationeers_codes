@@ -6,6 +6,8 @@
 \defcounter {refsection}{0}\relax 
 \contentsline {subsection}{\numberline {1.2}Gas laws}{5}{subsection.1.2}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {1.3}Solving the problem}{9}{subsection.1.3}%
+\contentsline {subsection}{\numberline {1.3}Why a one gas model}{8}{subsection.1.3}%
 \defcounter {refsection}{0}\relax 
-\contentsline {subsection}{\numberline {1.4}Calculating minimal amounts}{12}{subsection.1.4}%
+\contentsline {subsection}{\numberline {1.4}Solving the problem}{8}{subsection.1.4}%
+\defcounter {refsection}{0}\relax 
+\contentsline {subsection}{\numberline {1.5}Calculating minimal amounts}{11}{subsection.1.5}%

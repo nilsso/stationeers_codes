@@ -37,7 +37,8 @@
 % \def\vF{1000}
 % \def\tC{230}
 % \def\tH{2300}
-\def\SAMPLES{25}
+\def\SAMPLES{5}
+% \def\SAMPLES{25}
 \newcommand{\setupparams}[6]{%
     \pgfmathsetmacro{\GasConstant}{8.314}
     \pgfmathsetmacro{\vF}{1000}
@@ -213,19 +214,18 @@ Formally:
     distance, a $L$ liter is the base unit of volume. A single liter is defined as equivalent to
     three cubic meters ($1\cdot\text{L}=1\cdot\text{m}^3$). Particles of gasses are special in
     that they prefer to be evenly spaced apart from one-another while inside some volume. Take
-    some amount of gas (some number of moles of gas perhaps) and put it in a volume: a larger
+    some amount of gas and put it in a volume: a larger
     volume means more space between particles, while a smaller volume means less space between
     particles.
 
-    \emph{Temperature} is the quantity measured in $K$ kelvin that expresses hot or cold, where
-    hot and cold are manifestations of the transfer of thermal energy between particles (of
-    which all contain some amount of thermal energy). That is, an object is hot relative to its
-    colder surroundings if it has more thermal energy that its surroundings, and as a result can
-    impart some of its thermal energy to its surroundings: hot things impart energy and become
-    colder, cold things absorb energy and become hotter. Considering an amount of gas within a
-    volume, though the particles of gas are spaced apart from one-another they are not
-    stationary: they move or vibrate relative to their temperature. These movements may cause
-    the particles to collide with one-another and with the walls of the container.
+    \emph{Temperature} is the quantity measured in $K$ kelvin that expresses hot or cold, where hot
+    and cold are manifestations of the transfer of thermal energy between object. That is, an object
+    is hot relative to its colder surroundings if it has more thermal energy than its surroundings,
+    and as a result will impart some of its thermal energy to its surroundings: hot things impart
+    energy and become colder, cold things absorb energy and become hotter. Consider an amount of gas
+    within a volume; though the particles of gas are spaced apart from one-another they are not
+    stationary: they move/vibrate and collide with one-another and with the walls of the container,
+    and The amount they vibrate is relative to their temperature.
 
     \emph{Pressure} is the quantity that expresses the average amount of force that is being
     exerted upon the area of a surface. A force (measured in newtons) is an influence that can
@@ -267,6 +267,7 @@ the conditions, within a mixture of gasses, of just this one gas indexed by $g$.
     let $g\in\calG$ (read, $g$ is an element of $\calG\Leftrightarrow g=\Hyd$, or $\Nit$,\ \ldots, or $\NiOx$).
     Then we write:
     \begin{itemize}
+        \item $r_M(g)$ for the ratio of $g$ within the mixture,
         \item $n_M(g)$ for the moles of $g$ (the gas indexed by $g$) within mixture $M$,
         \item $P_M(g)$ for the partial pressure of $g$ within mixture $M$, and
         \item $C_g$ the \href{https://en.wikipedia.org/wiki/Specific_heat_capacity}{specific heat
@@ -330,20 +331,36 @@ formulas/indices, and their $C_g$ specific heats.
     \label{fig:gas-table}
 \end{figure}
 
-All but the last of these conditions can be determined without much calculation; in particular $n_M$
-the total moles, $T_M$ temperature and $P_M$ pressure can all be read directly from a furnace/pipe
-analyzer/tank in game, and $n_M(g)$ moles of the particular gas $g$ can be calculated simply as the
-ratio of the gas times the total moles:
+All but the last of these conditions can be determined without much calculation; in particular
+$r_M(g)$ the ratio of gas $g$ in $M$, $n_M$ the total moles in $M$, $T_M$ temperature of $M$ and
+$P_M$ pressure of $M$ can all be read directly from a furnace/pipe analyzer/tank in game, while
+$n_M(g)$ the moles of a particular gas $g$ in $M$ can be calculated simply as the ratio of the gas
+$r_M(g)$ times the total moles $n_M$:
 \[
-    n_M(g) = \text{(ratio of $g$ in $M$)}\cdot n_M,
-    \text{ where } 0 \le \text{ratio of $g$ in $M$} \le 1.
+    n_M(g) = r_M(g)n_M.
 \]
-Note that if $M$ consists of only one kind of gas (which I index as $g^*$):
-\[
-    \text{if } 1 = \text{(ratio of $g^*$ in $M$)}
-    \Rightarrow
-    n_M(g^*) = 1\cdot n_M = n_M.
-\]
+Things get much simpler if $M$ actually consists of only one kind of gas:
+\begin{definition}[Gas ratios and moles in a one-gas system]
+    Fix $M$ a volume of gas.
+    If $M$ consists entirely of only one kind of gas, which we identify by $g^*$, then for the
+    ratios and moles of gasses in $M$:
+    \[
+        r_M(g) = \begin{cases}
+            1, & \text{if } g = g^* \\
+            0, & \text{if } g \ne g^* \\
+        \end{cases},
+        \quad \text{and} \quad
+        n_M(g) = \begin{cases}
+            n_F, & \text{if } g = g^* \\
+            0,   & \text{if } g \ne g^* \\
+        \end{cases}.
+    \]
+\end{definition}
+This will be very important later on.
+
+(For diversity of notation's sake, and for fun, we could define the zero cases as $r_M(g)=0$ and
+$n_M(g)=0$ if $g\in\calG\setminus g^*$, where we read $g\in\calG\setminus g^*$ as ``$g$ an element
+of the set $\calG$ with the element $g^*$ removed''.)
 
 \subsection{Gas laws}
 
@@ -353,25 +370,25 @@ Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\cref{fig:
 \begin{definition}[Specific heat capacity of a gas mixture]
     Let $M$ be a mixture of the $\calG$ gasses. The specific heat of the mixture ($C_M$) is given by
     the sum of the products of the molar ratios of the gasses in the mixtures and their respective
-    specific heats. We can notate this mathematically in a few ways:
+    specific heats. We can notate this mathematically in a few ways; using summation notation:
     \[
         C_M
-        = \frac{n_M(\Hyd)}{n_M}C_{\Hyd}
-        + \frac{n_M(\Nit)}{n_M}C_{\Nit}
+        = r_M(\Hyd)C_{\Hyd}
+        + r_M(\Nit)C_{\Nit}
         + \cdots
-        + \frac{n_M(\NiOx)}{n_M}C_{\NiOx}
-        = \sum_{g\in\calG} \frac{n_M(g)}{n_M}C_g
+        + r_M(\NiOx)C_{\NiOx}
+        = \sum_{g\in\calG} r_M(g)C_g
     \]
     Or as the dot-product ($\cdot$) of vectors:
     \begin{equation}
-        C_M = (\vec{n}_M \cdot \vec{C}_{\calG})\frac{1}{n_M}
+        C_M = \vec{r}_M \cdot \vec{C}_{\calG}
     \end{equation}
-    Where $\vec{n}_M$ is the vector of the moles per gas in $M$, and
-    where $\vec{C}_{\calG}$ is the vector of the specific heats of each gas:
+    Where $\vec{r}_M$ is the vector of the molar ratios in $M$ for each gas, and
+    where $\vec{C}_{\calG}$ is the vector of the specific heats for each gas:
     \begin{align*}
-        \vec{n}_M
-        &= \angvec{n_M(\Hyd),n_M(\Nit),\ldots,n_M(\NiOx)}
-        = \angvec{n_M(g):g\in\calG} \\
+        \vec{r}_M
+        &= \angvec{r_M(\Hyd),r_M(\Nit),\ldots,r_M(\NiOx)}
+        = \angvec{r_M(g):g\in\calG} \\
         \vec{C}_{\calG}
         &= \angvec{C_{\Hyd},C_{\Nit},\ldots,C_{\NiOx}}
         = \angvec{C_g:g\in\calG}.
@@ -430,55 +447,36 @@ Recall that a gas, indexed by $g\in\calG$, has a specific heat $C_g$ (\cref{fig:
         = x_0 y_0+x_1 y_1+x_2 y_2.
     \]
 \end{note*}
-Note that if $M$ consists of only one kind of gas $g^*$, then the ratio of $g^*\in\calG$ in $M$ is
-one, and the ratio of $g\in\calG\setminus g^*$ in $M$ is zero. And so:
-\[
-    n_F(g) = \begin{cases}
-        n_F(g) = n_F, & \text{if } g = g^* \\
-        n_F(g) = 0, & \text{if } g \ne g^* \\
-    \end{cases}.
-\]
-(We read $g\in
-\calG\setminus g^*$ as: $g$ is an element of the set $\calG\setminus g^*$, where $\calG\setminus
-g^*$ is the set $\calG$ but with the $g^*$ element removed.)
 \begin{example*}[Using summation notation]
     Suppose $F$ our furnace contains 10 moles of each kind of gas, of which there are seven.
 
-    Then $n_F=70$, and:
+    Then $n_F=70$, $r_F(g)=\sfrac{10}{70} \doteq 0.143$, and:
     \begin{align*}
         C_F
-        = \sum_{g\in\calG}\frac{n_F(g)}{n_F}C_g
-        &= \frac{n_F(\Hyd)}{n_F}C_{\Hyd}+\frac{n_F(\Nit)}{n_F}C_{\Nit}+\cdots+\frac{n_F(\NiOx)}{n_F}C_{\NiOx} \\
-        &= \frac{10}{70}\left(20.4 + 20.6 + 21.1 + 24.8 + 28.2 + 72 + 23\right)
+        = \sum_{g\in\calG}r_F(g)C_g
+        &= r_F(\Hyd)C_{\Hyd}+r_F(\Nit)C_{\Nit}+\cdots+r_F(\NiOx)C_{\NiOx} \\
+        &= 0.143\cdot(20.4 + 20.6 + 21.1 + 24.8 + 28.2 + 72 + 23)
         = 30.01
     \end{align*}
 \end{example*}
 \begin{example*}[Using vector notation]
-    Suppose $F$ our furnace contains 70 moles of only $g^*=\CDiox$.
+    Suppose $F$ our furnace contains 70 moles of only $\CDiox$.
 
-    Then $n_F=n_F(\CDiox)=70$, and:
-    \begin{gather*}
-        n_F(g) = \begin{cases}
-            n_F(g) = n_F, & \text{if } g = \CDiox \\
-            n_F(g) = 0, & \text{if } g \ne \CDiox \\
-        \end{cases}, \\
-        \begin{aligned}
-            C_F
-            &= \left(\vec{n}_F \cdot \vec{C}_{\calG}\right)\frac{1}{n_F} \\
-            &=
-            \left(\angvec{0,0,0,0,70,0,0}
-            \cdot
-            \angvec{C_{\Hyd},C_{\Nit},C_{\Ox},C_{\Pol},C_{\CDiox},C_{\Water},C_{\NiOx}}\right)
-            \frac{1}{70}
-            \\
-            &= (70\cdot C_{\CDiox})\frac{1}{70} = C_{\CDiox}
-        \end{aligned}
-    \end{gather*}
+    Then $r_F(\CDiox)=1$, and:
+    \[
+        C_F
+        = \vec{r}_F \cdot \vec{C}_{\calG}
+        = \angvec{0,0,0,0,1,0,0}
+        \cdot
+        \angvec{C_{\Hyd},C_{\Nit},C_{\Ox},C_{\Pol},C_{\CDiox},C_{\Water},C_{\NiOx}}
+        = C_{\CDiox}.
+    \]
 \end{example*}
 This reduction of a volume's specific heat to a constant is one reason why I prefer a single gas
 ($\CDiox$) design; it reduces many of the later problems from problems of differential equations to
 simple problems of algebra. The other reason is that $\CDiox$ is plentiful, both as at atmospheric
-gas on planets like Mars and Venus and as a byproduct of combustion.
+gas on planets like Mars and Venus and as a byproduct of combustion. To see how \emph{not}
+restricting in this way make a much harder problem, see \cref{sec:why-one-gas}.
 
 In terms of gas laws, the model in Stationeers obeys the following laws for a fixed volume of gas.
 
@@ -534,17 +532,28 @@ Given volumes $A$ and $B$, and $C$ the result of combining $A$ and $B$:
     &T_C n_C C_C = T_A n_A C_A+T_B n_B C_B &
     &\text{(combined energies of two mixtures)} & \label{eq:energy-combine}
 \end{flalign}
-\begin{note*}[Why we need to consider combined energies]
-    When we mix a volume of gas $A$ with another $B$ into a combined volume $C$, the resulting
-    combined energy is entirely dependent on not only the temperatures of $A$ and $B$, but also
-    the compositions of $A$ and $B$. There is a lot more energy in one mole of $\Water$ at $273.15$
-    kelvin than there is in one mole of $\CDiox$ (precisely, 72 joules to 28.2 joules).
-    When we combine $A$ and $B$ we create a new composition, but the 
-\end{note*}
+% \begin{note*}[Why we need to consider combined energies]
+%     When we mix a volume of gas $A$ with another $B$ into a combined volume $C$, the resulting
+%     combined energy is entirely dependent on not only the temperatures of $A$ and $B$, but also
+%     the compositions of $A$ and $B$. There is a lot more energy in one mole of $\Water$ at $273.15$
+%     kelvin than there is in one mole of $\CDiox$ (precisely, 72 joules to 28.2 joules).
+%     When we combine $A$ and $B$ we create a new composition, but the 
+% \end{note*}
 With all this notation and all these gas equations in mind,
-we move onto solving the proposed problem.
+we could move onto solving the proposed problem.
 
-\pagebreak
+\subsection{Why a one gas model}
+\label{sec:why-one-gas}
+
+But before that, we might appreciate how much more difficult working with multiple gasses can be
+(and understand why I choose to use only one).
+
+We only really need consider the equation for combined energies, \cref{eq:energy-combine}:
+\[
+    T_C n_C C_C = T_A n_A C_A+T_B n_B C_B
+\]
+And the equation for the quantity $C_M=(\vec{C}_M\cdot\vec{C}_{\calG})$.
+
 \subsection{Solving the problem}
 
 To draft up the scenario:
@@ -1055,26 +1064,27 @@ which not only $n_R$ is minimal, but so is $n_C$ and $n_H$ (by virtue of minimiz
 
 We have, in the end, a final theorem to use in the application of solving the problem within
 Stationeers:
+
+\pagebreak
 \begin{thm}[Acquiring $T_T$ and $P_T$ with minimal $n_R$, $n_C$ and $n_H$]
+    Fix a single gas furnace system $F$ (using an advanced furnace, and thus 1,000 liter volume)
+    with initial temperature $T_F$ and pressure $P_F$, a target temperature $T_T$ and target
+    pressure $P_T$, a cold source $C$ with temperature $T_C\le T_T$, and a hot source $H$ with
+    temperature $T_H\ge T_T$.
 
-    Fix a single gas furnace system $F$ with initial temperature $T_F$ and pressure $P_F$, a target
-    temperature $T_T$ and target pressure $P_T$, a cold source $C$ with temperature $T_C\le T_T$,
-    and a hot source $H$ with temperature $T_H\ge T_T$.
-
-    The point $(n_R,n_C,n_H)$ which satisfies $T_T n_T=T_F(n_F-n_R)+T_I n_I$ that minimizes the
-    values of $n_R$, $n_H$ and $n_C$ is given by the following algorithm:
-    \begin{multicols}{2}
-        \begin{enumerate}[label=(\alph*)]
-            \item $n_T = \dfrac{P_T V_F}{R T_T}$,
-            \item $n_{R_C} = \dfrac{n_T(T_T - T_H)}{T_H - T_F} + n_F$,
-            \item $n_{R_H} = \dfrac{n_T(T_C - T_T)}{T_F - T_C} + n_F$,
-            \item ${\color{colorA}n_R} = n_{R_{\min}} = \max(0, n_{R_C}, n_{R_H})$,
-            \item $n_I = n_T - n_F + n_R$,
-            \item $T_I = \dfrac{T_T n_T - T_F(n_F - n_R)}{n_I}$,
-            \item ${\color{colorA}n_H} = \dfrac{n_I(T_C - T_I)}{T_C - T_H}$,
-            \item ${\color{colorA}n_C} = n_I - n_H$.
-        \end{enumerate}
-    \end{multicols}
+    The point $(n_R,n_C,n_H)$ which minimizes all three coordinates while also satisfying $T_T
+    n_T=T_F(n_F-n_R)+T_I n_I$ and $T_I n_I=T_C n_C+T_H n_H$ where $n_I=n_C+n_H$ (i.e. acquires the
+    temperature and pressure targets) is found via the following algorithm:
+    \begin{alignat*}{2}
+        &n_T & &= (P_T V_F)/(R T_T) \\
+        &n_{R_C} & &= (T_T - T_H)/(T_H - T_F) \\
+        &n_{R_H} && = (T_C - T_T)/(T_F - T_C) \\
+        &{\color{colorA}n_R} & &= \max(0, n_T\cdot\max(n_{R_C}, n_{R_H})+n_F) \\
+        &n_I & &= n_T - n_F + n_R \\
+        &T_I & &= (T_T n_T - T_F(n_F - n_R))/(n_I) \\
+        &{\color{colorA}n_H} & &= (n_I(T_C - T_I))/(T_C - T_H) \\
+        &{\color{colorA}n_C} & &= n_I - n_H.
+    \end{alignat*}
 \end{thm}
 
 % \begin{example*}
